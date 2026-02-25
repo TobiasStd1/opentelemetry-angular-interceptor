@@ -27,11 +27,11 @@
       <p>with all the module in app.module.ts</p>
       <textarea highlight-js [lang]="'typescript'">
 // Insert module OpenTelemetryInterceptorModule with configuration, HttpClientModule is used for interceptor
-OpenTelemetryInterceptorModule.forRoot(environment.openTelemetryConfig),
+provideOtelWebTracer(environment.openTelemetryConfig),
 // Collector
-OtelColExporterModule,
+provideOtelColExporter(),
 //Propagator
-CompositePropagatorModule,
+provideCompositePropagator(),
       </textarea>
       <p>You can see the B3 headers, W3CTraceContext header, Jaeger Propagator header and AWS X-Ray header added</p>
       <textarea textarea highlight-js [lang]="'curl'">
