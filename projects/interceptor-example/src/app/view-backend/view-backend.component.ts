@@ -4,9 +4,10 @@ import { ExampleService } from '../example.service';
 import { Result } from '../result';
 
 @Component({
-  selector: 'app-view-backend',
-  templateUrl: './view-backend.component.html',
-  styleUrls: ['./view-backend.component.css']
+    selector: 'app-view-backend',
+    templateUrl: './view-backend.component.html',
+    styleUrls: ['./view-backend.component.css'],
+    standalone: false
 })
 export class ViewBackendComponent implements OnInit {
 

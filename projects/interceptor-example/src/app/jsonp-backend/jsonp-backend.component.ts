@@ -3,9 +3,10 @@ import { ExampleService } from '../example.service';
 import { Result } from '../result';
 
 @Component({
-  selector: 'app-jsonp-backend',
-  templateUrl: './jsonp-backend.component.html',
-  styleUrls: ['./jsonp-backend.component.css'],
+    selector: 'app-jsonp-backend',
+    templateUrl: './jsonp-backend.component.html',
+    styleUrls: ['./jsonp-backend.component.css'],
+    standalone: false
 })
 export class JsonpBackendComponent implements OnInit {
   result: Result;

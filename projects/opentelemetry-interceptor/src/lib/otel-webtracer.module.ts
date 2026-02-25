@@ -1,14 +1,4 @@
-import {
-  APP_INITIALIZER,
-  ClassProvider,
-  ConstructorProvider,
-  EnvironmentProviders,
-  ExistingProvider,
-  FactoryProvider,
-  Provider,
-  ValueProvider,
-  makeEnvironmentProviders,
-} from '@angular/core';
+import { ClassProvider, ConstructorProvider, EnvironmentProviders, ExistingProvider, FactoryProvider, Provider, ValueProvider, makeEnvironmentProviders, inject, provideAppInitializer } from '@angular/core';
 import {
   defineConfigProvider,
   OpenTelemetryConfig,
@@ -38,11 +28,9 @@ function getOtelWebTracerProviders(
   return [
     configProvider,
     InstrumentationService,
-    {
-      provide: APP_INITIALIZER,
-      useFactory: instruServiceLoader,
-      deps: [InstrumentationService],
-      multi: true
-    }
+    provideAppInitializer(() => {
+        const initializerFn = (instruServiceLoader)(inject(InstrumentationService));
+        return initializerFn();
+      })
   ];
 }

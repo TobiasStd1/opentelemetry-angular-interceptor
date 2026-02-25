@@ -3,9 +3,10 @@ import { Result } from '../result';
 import { ExampleService } from '../example.service';
 
 @Component({
-  selector: 'app-post-backend',
-  templateUrl: './post-backend.component.html',
-  styleUrls: ['./post-backend.component.css'],
+    selector: 'app-post-backend',
+    templateUrl: './post-backend.component.html',
+    styleUrls: ['./post-backend.component.css'],
+    standalone: false
 })
 export class PostBackendComponent implements OnInit {
   public result: Result;
