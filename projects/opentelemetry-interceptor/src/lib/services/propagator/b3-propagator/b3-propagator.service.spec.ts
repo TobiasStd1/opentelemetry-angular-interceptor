@@ -6,6 +6,7 @@ import {
   b3PropagatorMultiConfig
 } from '../../../../../__mocks__/data/config.mock';
 import { OTEL_CONFIG } from '../../../configuration/opentelemetry-config';
+import {provideB3Propagator} from "./b3-propagator.module";
 
 describe('B3PropagatorService', () => {
   let b3PropagatorService: B3PropagatorService;
@@ -13,7 +14,7 @@ describe('B3PropagatorService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        B3PropagatorService,
+        provideB3Propagator(),
         { provide: OTEL_CONFIG, useValue: b3PropagatorMultiConfig },
       ],
     });
@@ -32,7 +33,7 @@ describe('B3PropagatorService', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
-        B3PropagatorService,
+        provideB3Propagator(),
         { provide: OTEL_CONFIG, useValue: b3PropagatorSingleConfig },
       ],
     });

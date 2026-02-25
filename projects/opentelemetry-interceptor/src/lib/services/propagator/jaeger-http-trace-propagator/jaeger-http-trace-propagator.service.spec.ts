@@ -7,6 +7,7 @@ import {
   jaegerPropagatorWithoutCustomHeaderConfig,
 } from '../../../../../__mocks__/data/config.mock';
 import { JaegerPropagator } from '@opentelemetry/propagator-jaeger';
+import {provideJaegerHttpTracePropagator} from "./jaeger-http-trace-propagator.module";
 
 describe('JaegerHttpTracePropagatorService', () => {
   let service: JaegerHttpTracePropagatorService;
@@ -14,7 +15,7 @@ describe('JaegerHttpTracePropagatorService', () => {
   it('should return an JaegerHttpTracePropagator', () => {
     TestBed.configureTestingModule({
       providers: [
-        JaegerHttpTracePropagatorService,
+        provideJaegerHttpTracePropagator(),
         {
           provide: OTEL_CONFIG,
           useValue: jaegerPropagatorConfig,

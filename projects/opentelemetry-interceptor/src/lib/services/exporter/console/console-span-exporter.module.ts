@@ -1,15 +1,15 @@
-import { NgModule } from '@angular/core';
+import { Provider } from '@angular/core';
 import { ConsoleSpanExporterService } from './console-span-exporter.service';
 import { OTEL_EXPORTER } from '../exporter.interface';
 
 
-
-@NgModule({
-  declarations: [],
-  imports: [],
-  providers: [
-    { provide: OTEL_EXPORTER, useClass: ConsoleSpanExporterService }
-  ]
-})
-export class ConsoleSpanExporterModule {
+/**
+ * provideConsoleSpanExporter
+ * A default span exporter provider
+ */
+export function provideConsoleSpanExporter(): Provider {
+  return {
+    provide: OTEL_EXPORTER,
+    useClass: ConsoleSpanExporterService
+  };
 }

@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
 import { W3CTraceContextPropagatorService } from './w3c-trace-context-propagator.service';
+import {provideW3CTraceContextPropagator} from "./w3c-trace-context-propagator.module";
 
 describe('W3CTraceContextPropagatorService', () => {
   let service: W3CTraceContextPropagatorService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [W3CTraceContextPropagatorService],
+      providers: [provideW3CTraceContextPropagator()],
     });
     service = TestBed.inject(W3CTraceContextPropagatorService);
   });

@@ -1,15 +1,14 @@
-import { NgModule } from '@angular/core';
+import { Provider } from '@angular/core';
 import { CompositePropagatorService } from './composite-propagator.service';
 import { OTEL_PROPAGATOR } from '../propagator.interface';
 
-
-
-@NgModule({
-  declarations: [],
-  imports: [],
-  providers: [
-    { provide: OTEL_PROPAGATOR, useClass: CompositePropagatorService }
-  ]
-})
-export class  CompositePropagatorModule {
+/**
+ * provideCompositePropagator
+ * A composite propagator provider
+ */
+export function provideCompositePropagator(): Provider {
+  return {
+    provide: OTEL_PROPAGATOR,
+    useClass: CompositePropagatorService
+  };
 }

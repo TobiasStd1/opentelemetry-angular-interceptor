@@ -11,10 +11,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import {
-  OtelColExporterModule,
-  CompositePropagatorModule,
-  OtelWebTracerModule,
-  OTEL_CONFIG } from 'projects/opentelemetry-interceptor/src/public-api';
+  OTEL_CONFIG, provideOtelColExporter, provideCompositePropagator, provideOtelWebTracer
+} from 'projects/opentelemetry-interceptor/src/public-api';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ViewBackendComponent } from './view-backend/view-backend.component';
 import { HighlightJsModule } from 'ngx-highlight-js';
@@ -30,12 +28,6 @@ import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xm
   declarations: [AppComponent, ViewBackendComponent, PostBackendComponent, JsonpBackendComponent],
   imports: [
     BrowserModule,
-    OtelWebTracerModule.forRoot(
-      undefined,
-      {provide: OTEL_CONFIG, useFactory: () => (environment.openTelemetryConfig)}
-    ),
-    OtelColExporterModule,
-    CompositePropagatorModule,
     HttpClientModule,
     HttpClientJsonpModule,
     FormsModule,
@@ -51,6 +43,9 @@ import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xm
     AppRoutingModule,
   ],
   providers: [
+    provideOtelWebTracer(undefined, {provide: OTEL_CONFIG, useFactory: () => (environment.openTelemetryConfig)}),
+    provideOtelColExporter(),
+    provideCompositePropagator(),
     {provide: OTEL_INSTRUMENTATION_PLUGINS, useValue: [new XMLHttpRequestInstrumentation()]}
   ],
   bootstrap: [AppComponent],

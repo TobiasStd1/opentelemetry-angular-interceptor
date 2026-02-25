@@ -1,15 +1,14 @@
-import { NgModule } from '@angular/core';
+import { Provider } from '@angular/core';
 import { OTEL_PROPAGATOR } from '../propagator.interface';
 import { AwsXrayPropagatorService } from './aws-xray-propagator.service';
 
-
-
-@NgModule({
-  declarations: [],
-  imports: [],
-  providers: [
-    { provide: OTEL_PROPAGATOR, useClass: AwsXrayPropagatorService }
-  ]
-})
-export class AwsXrayPropagatorModule {
+/**
+ * provideAwsXrayPropagator
+ * A aws xray propagator provider
+ */
+export function provideAwsXrayPropagator(): Provider {
+  return {
+    provide: OTEL_PROPAGATOR,
+    useClass: AwsXrayPropagatorService
+  };
 }

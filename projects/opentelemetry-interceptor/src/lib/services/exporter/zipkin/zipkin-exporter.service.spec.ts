@@ -4,6 +4,7 @@ import { OTEL_CONFIG } from '../../../configuration/opentelemetry-config';
 import { zipkinConfig, zipkinOtherConfig } from '../../../../../__mocks__/data/config.mock';
 import { ExporterConfig, ZipkinExporter } from '@opentelemetry/exporter-zipkin';
 import { mocked } from 'jest-mock';
+import {provideZipkinExporter} from "./zipkin-exporter.module";
 
 jest.mock('@opentelemetry/exporter-zipkin');
 
@@ -14,7 +15,7 @@ describe('ZipkinExporterService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        ZipkinExporterService,
+        provideZipkinExporter(),
         { provide: OTEL_CONFIG, useValue: zipkinConfig },
       ]
     });

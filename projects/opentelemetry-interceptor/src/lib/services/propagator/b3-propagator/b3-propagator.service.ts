@@ -21,7 +21,7 @@ export class B3PropagatorService implements IPropagator {
   /**
    * B3PropagatorConfig
    */
-  private b3PropagatorConfig: B3PropagatorConfig;
+  private readonly b3PropagatorConfig: B3PropagatorConfig;
 
   /**
    * Constructor

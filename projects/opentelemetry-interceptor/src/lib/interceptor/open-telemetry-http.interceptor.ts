@@ -1,11 +1,12 @@
-import { Injectable, Inject, Optional } from '@angular/core';
+/*eslint no-underscore-dangle: ["error", { "allow": ["_currentContext"] }]*/
+import { Injectable, Inject, Optional, inject } from '@angular/core';
 import {
   HttpRequest,
-  HttpHandler,
   HttpEvent,
-  HttpInterceptor,
   HttpResponse,
-  HttpErrorResponse
+  HttpErrorResponse,
+  HttpInterceptorFn,
+  HttpHandlerFn,
 } from '@angular/common/http';
 import { PlatformLocation } from '@angular/common';
 import { Observable } from 'rxjs';
@@ -29,7 +30,6 @@ import {
 } from '@opentelemetry/core';
 import {
   ATTR_USER_AGENT_ORIGINAL,
-  ATTR_URL_PATH,
   ATTR_URL_QUERY,
   ATTR_HTTP_RESPONSE_STATUS_CODE,
   ATTR_ERROR_TYPE,
@@ -39,8 +39,6 @@ import {
   ATTR_URL_SCHEME,
   ATTR_SERVER_ADDRESS,
   ATTR_SERVER_PORT,
-  // ATTR_HTTP_REQUEST_HEADER,
-  //SEMATTRS_ERROR_TYPE
 } from '@opentelemetry/semantic-conventions';
 import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { tap, finalize } from 'rxjs/operators';
@@ -55,13 +53,15 @@ import { OTEL_PROPAGATOR, IPropagator } from '../services/propagator/propagator.
 import { OTEL_LOGGER, OTEL_CUSTOM_SPAN } from '../configuration/opentelemetry-config';
 import { CustomSpan } from './custom-span.interface';
 
-/**
- * OpenTelemetryInterceptor class
- */
+export const openTelemetryHttpInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
+  const openTelemetryService = inject(OpenTelemetryService);
+  return openTelemetryService.intercept(req, next);
+};
+
 @Injectable({
   providedIn: 'root',
 })
-export class OpenTelemetryHttpInterceptor implements HttpInterceptor {
+export class OpenTelemetryService {
   /**
    * tracer
    */
@@ -112,38 +112,39 @@ export class OpenTelemetryHttpInterceptor implements HttpInterceptor {
   }
 
     /**
-   * Overide method
-   * Interceptor from HttpInterceptor Angular
-   *
-   * @param request the current request
-   * @param next next
-   */
-    intercept(
+     * Interceptor method for HttpInterceptorFn
+     *
+     * @param request the current request
+     * @param next next
+     */
+     intercept(
       request: HttpRequest<unknown>,
-      next: HttpHandler
+      next: HttpHandlerFn
     ): Observable<HttpEvent<unknown>> {
       if (isUrlIgnored(request.url, this.config.ignoreUrls?.urls)) {
-        return next.handle(request);
+        return next(request);
       }
       this.contextManager.disable(); //FIX - reinit contextManager for each http call
       this.contextManager.enable();
       const span: Span = this.initSpan(request);
       const tracedReq = this.injectContextAndHeader(request);
-      return next.handle(tracedReq).pipe(
+      return next(tracedReq).pipe(
         tap(
-          (event: HttpResponse<any>) => {
-            span.setAttributes(
-              {
-                [ATTR_HTTP_RESPONSE_STATUS_CODE]: event.status,
+          (event: HttpEvent<any>) => {
+              if (event instanceof HttpResponse) {
+                span.setAttributes(
+                    {
+                        [ATTR_HTTP_RESPONSE_STATUS_CODE]: event.status,
+                    }
+                );
+                if (this.logBody && event.body != null) {
+                    span.addEvent('response', { body: JSON.stringify(event.body) });
+                }
+                span.setStatus({
+                    code: SpanStatusCode.UNSET
+                });
+                this.setCustomSpan(span, request, event);
               }
-            );
-            if (this.logBody && event.body != null) {
-              span.addEvent('response', { body: JSON.stringify(event.body) });
-            }
-            span.setStatus({
-              code: SpanStatusCode.UNSET
-            });
-            this.setCustomSpan(span, request, event);
           },
           (event: HttpErrorResponse) => {
             span.setAttributes(
@@ -319,3 +320,5 @@ export class OpenTelemetryHttpInterceptor implements HttpInterceptor {
     return this.customSpan != null ? this.customSpan.add(span, request, response) : span;
   }
 }
+
+

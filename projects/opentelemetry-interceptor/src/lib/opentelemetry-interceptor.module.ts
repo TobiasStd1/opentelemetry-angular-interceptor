@@ -1,59 +1,51 @@
 import {
-  NgModule,
-  ModuleWithProviders,
-  Optional,
-  SkipSelf,
   ValueProvider,
   ClassProvider,
   ConstructorProvider,
   ExistingProvider,
   FactoryProvider,
+  Provider,
+  makeEnvironmentProviders,
+  EnvironmentProviders,
 } from '@angular/core';
 import {
   defineConfigProvider,
   OpenTelemetryConfig,
 } from './configuration/opentelemetry-config';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { OpenTelemetryHttpInterceptor } from './interceptor/opentelemetry-http.interceptor';
 
+/**
+ * provideOpenTelemetryInterceptor
+ * A opentelemetry interceptor provider
+ */
+export function provideOpenTelemetryInterceptor(
+  config: OpenTelemetryConfig | null | undefined,
+  configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
+): EnvironmentProviders {
+  return makeEnvironmentProviders(
+    getOpenTelemetryInterceptorProviders(config, configProvider)
+  );
+}
 
-@NgModule({
-  declarations: [],
-  imports: [HttpClientModule],
-  exports: [],
-})
-export class OpenTelemetryInterceptorModule {
-  constructor(
-    @Optional() @SkipSelf() parentModule?: OpenTelemetryInterceptorModule
-  ) {
-    if (parentModule) {
-      throw new Error(
-        'OpentelemetryInterceptorModule is already loaded. Import it in the AppModule only'
-      );
-    }
-  }
+/**
+ * provideOpenTelemetryConfig
+ * A opentelemetry config provider
+ */
+export function provideOpenTelemetryConfig(
+  config: OpenTelemetryConfig | null | undefined,
+  configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
+): EnvironmentProviders {
+  return makeEnvironmentProviders([
+    defineConfigProvider(config, configProvider)
+  ]);
+}
 
-  public static forRoot(
-    config: OpenTelemetryConfig | null | undefined,
-    configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
-    ): ModuleWithProviders<OpenTelemetryInterceptorModule> {
+function getOpenTelemetryInterceptorProviders(
+  config: OpenTelemetryConfig | null | undefined,
+  configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
+): Provider[] {
+  configProvider = defineConfigProvider(config, configProvider);
 
-      //Interceptor
-      const interceptorProvider = {
-        provide: HTTP_INTERCEPTORS,
-        useClass: OpenTelemetryHttpInterceptor,
-        multi: true,
-      };
-
-      configProvider = defineConfigProvider(config,configProvider);
-
-    return {
-      ngModule: OpenTelemetryInterceptorModule,
-      providers: [
-        configProvider,
-        interceptorProvider,
-      ],
-    };
-  }
-
+  return [
+    configProvider,
+  ];
 }

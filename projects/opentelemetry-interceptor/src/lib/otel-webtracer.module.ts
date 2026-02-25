@@ -2,13 +2,12 @@ import {
   APP_INITIALIZER,
   ClassProvider,
   ConstructorProvider,
+  EnvironmentProviders,
   ExistingProvider,
   FactoryProvider,
-  ModuleWithProviders,
-  NgModule,
-  Optional,
-  SkipSelf,
+  Provider,
   ValueProvider,
+  makeEnvironmentProviders,
 } from '@angular/core';
 import {
   defineConfigProvider,
@@ -21,39 +20,29 @@ export const instruServiceLoader = (instrumentationService: InstrumentationServi
   return loader;
 };
 
+export function provideOtelWebTracer(
+  config: OpenTelemetryConfig | null | undefined,
+  configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
+): EnvironmentProviders {
+  return makeEnvironmentProviders(
+    getOtelWebTracerProviders(config, configProvider)
+  );
+}
 
-@NgModule()
-export class OtelWebTracerModule {
+function getOtelWebTracerProviders(
+  config: OpenTelemetryConfig | null | undefined,
+  configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
+): Provider[] {
+  configProvider = defineConfigProvider(config, configProvider);
 
-  constructor(
-    @Optional() @SkipSelf() parentModule?: OtelWebTracerModule
-  ) {
-    if (parentModule) {
-      throw new Error(
-        'OtelWebTracerModule is already loaded. Import it in the AppModule only'
-      );
+  return [
+    configProvider,
+    InstrumentationService,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: instruServiceLoader,
+      deps: [InstrumentationService],
+      multi: true
     }
-  }
-
-  public static forRoot(
-    config: OpenTelemetryConfig | null | undefined,
-    configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
-  ): ModuleWithProviders<OtelWebTracerModule> {
-
-    configProvider = defineConfigProvider(config, configProvider);
-
-    return {
-      ngModule: OtelWebTracerModule,
-      providers: [
-        configProvider,
-        InstrumentationService,
-        {
-          provide: APP_INITIALIZER,
-          useFactory: instruServiceLoader,
-          deps: [InstrumentationService],
-          multi: true
-        }
-      ],
-    };
-  }
+  ];
 }

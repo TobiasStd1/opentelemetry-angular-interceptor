@@ -1,15 +1,15 @@
-import { NgModule } from '@angular/core';
+import { Provider } from '@angular/core';
 import { OTEL_EXPORTER } from '../exporter.interface';
 import { ZipkinExporterService } from './zipkin-exporter.service';
 
 
-
-@NgModule({
-  declarations: [],
-  imports: [],
-  providers: [
-    { provide: OTEL_EXPORTER, useClass: ZipkinExporterService }
-  ]
-})
-export class ZipkinExporterModule {
+/**
+ * provideZipkinExporter
+ * A zipkin span exporter provider
+ */
+export function provideZipkinExporter(): Provider {
+  return {
+    provide: OTEL_EXPORTER,
+    useClass: ZipkinExporterService
+  };
 }

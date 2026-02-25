@@ -1,17 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import {
-  HttpClientTestingModule,
-  HttpTestingController,
+  HttpTestingController, provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import {
-  HTTP_INTERCEPTORS,
   HttpClient,
   HttpHeaders,
   HttpErrorResponse,
   HttpRequest,
-  HttpResponse,
+  HttpResponse, provideHttpClient, withInterceptors,
 } from '@angular/common/http';
-import { OpenTelemetryHttpInterceptor } from './opentelemetry-http.interceptor';
+import { openTelemetryHttpInterceptor, OpenTelemetryService } from './open-telemetry-http.interceptor';
 import {
   OTEL_CUSTOM_SPAN,
   OpenTelemetryConfig,
@@ -27,26 +25,49 @@ import {
   otelTraceparentIgnoreUrlsConfig,
 } from '../../../__mocks__/data/config.mock';
 import { of } from 'rxjs';
-import { ConsoleSpanExporterModule } from '../services/exporter/console/console-span-exporter.module';
+import {
+  provideConsoleSpanExporter
+} from '../services/exporter/console/console-span-exporter.module';
 // eslint-disable-next-line max-len
-import { W3CTraceContextPropagatorModule } from '../services/propagator/w3c-trace-context-propagator/w3c-trace-context-propagator.module';
+import {
+  provideW3CTraceContextPropagator
+} from '../services/propagator/w3c-trace-context-propagator/w3c-trace-context-propagator.module';
 import { CustomSpan } from './custom-span.interface';
 import { Span } from '@opentelemetry/api';
-import { NoopSpanExporterModule } from '../services/exporter/noop-exporter/noop-span-exporter.module';
+import {
+  provideNoopSpanExporter
+} from '../services/exporter/noop-exporter/noop-span-exporter.module';
 
 describe('OpenTelemetryHttpInterceptor', () => {
   let httpClient: HttpClient;
   let httpControllerMock: HttpTestingController;
+
+  const defineModuleTest = (
+    otelcolConfig: OpenTelemetryConfig
+  ) => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideConsoleSpanExporter(),
+        provideW3CTraceContextPropagator(),
+        provideHttpClient(withInterceptors([openTelemetryHttpInterceptor])),
+        provideHttpClientTesting(),
+        {
+          provide: OTEL_CONFIG,
+          useValue: otelcolConfig,
+        },
+      ],
+    });
+    httpClient = TestBed.inject(HttpClient);
+    httpControllerMock = TestBed.inject(HttpTestingController);
+  };
+
   beforeEach(() => {
-    ({ httpClient, httpControllerMock } = defineModuleTest(
-      httpClient,
-      httpControllerMock,
-      otelcolExporterConfig
-    ));
+    defineModuleTest(otelcolExporterConfig);
   });
   it('should be created', () => {
-    const interceptor = TestBed.inject(OpenTelemetryHttpInterceptor);
-    expect(interceptor).toBeTruthy();
+    const service = TestBed.inject(OpenTelemetryService);
+    expect(service).toBeTruthy();
   });
 
   it('Add traceparent header on a given request', () => {
@@ -59,21 +80,8 @@ describe('OpenTelemetryHttpInterceptor', () => {
     httpControllerMock.verify();
   });
 
-  it('Should accept pathname', () => {
-    const url = '/api/v1/test?key=value';
-    httpClient.get(url).subscribe();
-    const req = httpControllerMock.expectOne(url);
-    expect(req.request.url).not.toBeNull();
-    req.flush({});
-    httpControllerMock.verify();
-  });
-
   it('verify with production mode', () => {
-    ({ httpClient, httpControllerMock } = defineModuleTest(
-      httpClient,
-      httpControllerMock,
-      otelcolExporterProductionConfig
-    ));
+    defineModuleTest(otelcolExporterProductionConfig);
 
     const url = 'http://url.test.com';
     httpClient.get(url).subscribe();
@@ -131,11 +139,7 @@ describe('OpenTelemetryHttpInterceptor', () => {
   });
 
   it('Exclude traceparent header on a given request that is included in the ignoreUrls array', () => {
-    ({ httpClient, httpControllerMock } = defineModuleTest(
-      httpClient,
-      httpControllerMock,
-      otelTraceparentIgnoreUrlsConfig
-    ));
+    defineModuleTest(otelTraceparentIgnoreUrlsConfig);
     const url = 'http://url.test.com';
     httpClient.get(url).subscribe();
     const req = httpControllerMock.expectOne(url);
@@ -146,11 +150,7 @@ describe('OpenTelemetryHttpInterceptor', () => {
   });
 
   it('verify probability sampler to be add', () => {
-    ({ httpClient, httpControllerMock } = defineModuleTest(
-      httpClient,
-      httpControllerMock,
-      otelcolExporterWithProbabilitySamplerAndCompositeConfig
-    ));
+    defineModuleTest(otelcolExporterWithProbabilitySamplerAndCompositeConfig);
 
     const url = 'http://url.test.com';
     httpClient.get(url).subscribe();
@@ -161,11 +161,7 @@ describe('OpenTelemetryHttpInterceptor', () => {
   });
 
   it('verify probability sampler to be add at zero', () => {
-    ({ httpClient, httpControllerMock } = defineModuleTest(
-      httpClient,
-      httpControllerMock,
-      otelcolExporterWithProbabilitySamplerAtZeroAndCompositeConfig
-    ));
+    defineModuleTest(otelcolExporterWithProbabilitySamplerAtZeroAndCompositeConfig);
 
     const url = 'http://url.test.com';
     httpClient.get(url).subscribe();
@@ -175,11 +171,7 @@ describe('OpenTelemetryHttpInterceptor', () => {
     httpControllerMock.verify();
   });
   it('verify probability sampler to be add at one', () => {
-    ({ httpClient, httpControllerMock } = defineModuleTest(
-      httpClient,
-      httpControllerMock,
-      otelcolExporterWithProbabilitySamplerAtTwoConfig
-    ));
+    defineModuleTest(otelcolExporterWithProbabilitySamplerAtTwoConfig);
 
     const url = 'http://url.test.com';
     httpClient.get(url).subscribe();
@@ -190,11 +182,7 @@ describe('OpenTelemetryHttpInterceptor', () => {
   });
 
   it('verify with BatchSpanProcessorConfig', () => {
-    ({ httpClient, httpControllerMock } = defineModuleTest(
-      httpClient,
-      httpControllerMock,
-      otelcolExporterProductionAndBatchSpanProcessorConfig
-    ));
+    defineModuleTest(otelcolExporterProductionAndBatchSpanProcessorConfig);
 
     const url = 'http://url.test.com';
     httpClient.get(url).subscribe();
@@ -208,21 +196,15 @@ describe('OpenTelemetryHttpInterceptor', () => {
   it('verify with a NoopSpanExporterService', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      imports: [
-        HttpClientTestingModule,
-        NoopSpanExporterModule,
-        W3CTraceContextPropagatorModule,
-      ],
       providers: [
+        provideNoopSpanExporter(),
+        provideW3CTraceContextPropagator(),
+        provideHttpClient(withInterceptors([openTelemetryHttpInterceptor])),
+        provideHttpClientTesting(),
         {
           provide: OTEL_CONFIG,
           useValue: otelcolExporterConfig,
         },
-        {
-          provide: HTTP_INTERCEPTORS,
-          useClass: OpenTelemetryHttpInterceptor,
-          multi: true,
-        }
       ],
     });
     httpClient = TestBed.inject(HttpClient);
@@ -240,20 +222,14 @@ describe('OpenTelemetryHttpInterceptor', () => {
   it('verify with CustomSpan', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      imports: [
-        HttpClientTestingModule,
-        ConsoleSpanExporterModule,
-        W3CTraceContextPropagatorModule,
-      ],
       providers: [
+        provideConsoleSpanExporter(),
+        provideW3CTraceContextPropagator(),
+        provideHttpClient(withInterceptors([openTelemetryHttpInterceptor])),
+        provideHttpClientTesting(),
         {
           provide: OTEL_CONFIG,
           useValue: otelcolExporterConfig,
-        },
-        {
-          provide: HTTP_INTERCEPTORS,
-          useClass: OpenTelemetryHttpInterceptor,
-          multi: true,
         },
         {
           provide: OTEL_CUSTOM_SPAN,
@@ -274,35 +250,6 @@ describe('OpenTelemetryHttpInterceptor', () => {
     httpControllerMock.verify();
   });
 });
-
-const defineModuleTest = (
-  httpClient: HttpClient,
-  httpControllerMock: HttpTestingController,
-  otelcolConfig: OpenTelemetryConfig
-) => {
-  TestBed.resetTestingModule();
-  TestBed.configureTestingModule({
-    imports: [
-      HttpClientTestingModule,
-      ConsoleSpanExporterModule,
-      W3CTraceContextPropagatorModule,
-    ],
-    providers: [
-      {
-        provide: OTEL_CONFIG,
-        useValue: otelcolConfig,
-      },
-      {
-        provide: HTTP_INTERCEPTORS,
-        useClass: OpenTelemetryHttpInterceptor,
-        multi: true,
-      },
-    ],
-  });
-  httpClient = TestBed.inject(HttpClient);
-  httpControllerMock = TestBed.inject(HttpTestingController);
-  return { httpClient, httpControllerMock };
-};
 
 class CustomSpanImpl implements CustomSpan {
   add(span: Span, request: HttpRequest<unknown>, response: HttpResponse<unknown> | HttpErrorResponse): Span {

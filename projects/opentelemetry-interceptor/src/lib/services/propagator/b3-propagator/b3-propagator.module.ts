@@ -1,15 +1,14 @@
-import { NgModule } from '@angular/core';
+import { Provider } from '@angular/core';
 import { B3PropagatorService } from './b3-propagator.service';
 import { OTEL_PROPAGATOR } from '../propagator.interface';
 
-
-
-@NgModule({
-  declarations: [],
-  imports: [],
-  providers: [
-    { provide: OTEL_PROPAGATOR, useClass: B3PropagatorService }
-  ]
-})
-export class B3PropagatorModule {
+/**
+ * provideB3Propagator
+ * A b3 propagator provider
+ */
+export function provideB3Propagator(): Provider {
+  return {
+    provide: OTEL_PROPAGATOR,
+    useClass: B3PropagatorService
+  };
 }

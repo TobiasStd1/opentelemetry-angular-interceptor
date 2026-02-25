@@ -2,7 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
-import { HttpClientModule, HttpClientJsonpModule } from '@angular/common/http';
+import { provideHttpClient, withJsonpSupport } from '@angular/common/http';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,7 +11,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 // eslint-disable-next-line max-len
-import { OpenTelemetryInterceptorModule, OTEL_LOGGER, OtelColExporterModule, CompositePropagatorModule } from 'projects/opentelemetry-interceptor/src/public-api';
+import {
+  OTEL_LOGGER,
+  provideOtelColExporter, provideCompositePropagator, provideOpenTelemetryInterceptor
+} from 'projects/opentelemetry-interceptor/src/public-api';
 import { environment } from '../environments/environment';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ViewBackendComponent } from './view-backend/view-backend.component';
@@ -27,12 +30,6 @@ import { CustomSpanImpl } from './custom-span-impl';
   declarations: [AppComponent, ViewBackendComponent, PostBackendComponent, JsonpBackendComponent],
   imports: [
     BrowserModule,
-    // Insert module OpenTelemetryInterceptorModule with configuration, HttpClientModule is used for interceptor
-    OpenTelemetryInterceptorModule.forRoot(environment.openTelemetryConfig),
-    OtelColExporterModule,
-    CompositePropagatorModule,
-    HttpClientModule,
-    HttpClientJsonpModule,
     FormsModule,
     MatToolbarModule,
     MatCardModule,
@@ -48,6 +45,11 @@ import { CustomSpanImpl } from './custom-span-impl';
     LoggerModule.forRoot(environment.loggerConfig),
   ],
   providers: [
+    provideHttpClient(withJsonpSupport()),
+    // Insert module provideOpenTelemetryInterceptor with configuration, "provideHttpClient()" is used for interceptor
+    provideOpenTelemetryInterceptor(environment.openTelemetryConfig),
+    provideOtelColExporter(),
+    provideCompositePropagator(),
     // Provide token OTEL_LOGGER with the NGXLogger
     { provide: OTEL_LOGGER, useExisting: NGXLogger },
     { provide: OTEL_CUSTOM_SPAN, useClass: CustomSpanImpl}
