@@ -1,5 +1,12 @@
-import 'jest-preset-angular/setup-jest';
 import { TextEncoder } from 'util';
+import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
+
+setupZoneTestEnv({
+  errorOnUnknownElements: true,
+  errorOnUnknownProperties: true,
+});
+
+
 /**
  * @ignore
  */

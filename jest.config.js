@@ -24,7 +24,6 @@ module.exports = {
   setupFilesAfterEnv: [
     '<rootDir>/projects/opentelemetry-interceptor/setupJest.ts'
   ],
-  globalSetup: 'jest-preset-angular/global-setup',
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/dist/opentelemetry-interceptor/',

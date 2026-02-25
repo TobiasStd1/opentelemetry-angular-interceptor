@@ -22,7 +22,7 @@ export function provideOtelWebTracer(
 function getOtelWebTracerProviders(
   config: OpenTelemetryConfig | null | undefined,
   configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
-): Provider[] {
+): Array<Provider | EnvironmentProviders> {
   configProvider = defineConfigProvider(config, configProvider);
 
   return [
