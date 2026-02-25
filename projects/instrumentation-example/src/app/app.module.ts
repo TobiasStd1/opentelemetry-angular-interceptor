@@ -2,7 +2,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
-import { HttpClientModule, HttpClientJsonpModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withJsonpSupport } from '@angular/common/http';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -24,30 +24,23 @@ import { OTEL_INSTRUMENTATION_PLUGINS } from '../../../opentelemetry-interceptor
 import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
 
 
-@NgModule({
-  declarations: [AppComponent, ViewBackendComponent, PostBackendComponent, JsonpBackendComponent],
-  imports: [
-    BrowserModule,
-    HttpClientModule,
-    HttpClientJsonpModule,
-    FormsModule,
-    MatToolbarModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatMenuModule,
-    MatIconModule,
-    MatButtonModule,
-    MatInputModule,
-    BrowserAnimationsModule,
-    HighlightJsModule,
-    AppRoutingModule,
-  ],
-  providers: [
-    provideOtelWebTracer(undefined, {provide: OTEL_CONFIG, useFactory: () => (environment.openTelemetryConfig)}),
-    provideOtelColExporter(),
-    provideCompositePropagator(),
-    {provide: OTEL_INSTRUMENTATION_PLUGINS, useValue: [new XMLHttpRequestInstrumentation()]}
-  ],
-  bootstrap: [AppComponent],
-})
+@NgModule({ declarations: [AppComponent, ViewBackendComponent, PostBackendComponent, JsonpBackendComponent],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        FormsModule,
+        MatToolbarModule,
+        MatCardModule,
+        MatFormFieldModule,
+        MatMenuModule,
+        MatIconModule,
+        MatButtonModule,
+        MatInputModule,
+        BrowserAnimationsModule,
+        HighlightJsModule,
+        AppRoutingModule], providers: [
+        provideOtelWebTracer(undefined, { provide: OTEL_CONFIG, useFactory: () => (environment.openTelemetryConfig) }),
+        provideOtelColExporter(),
+        provideCompositePropagator(),
+        { provide: OTEL_INSTRUMENTATION_PLUGINS, useValue: [new XMLHttpRequestInstrumentation()] },
+        provideHttpClient(withInterceptorsFromDi(), withJsonpSupport())
+    ] })
 export class AppModule { }

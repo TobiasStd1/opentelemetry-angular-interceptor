@@ -1,13 +1,6 @@
 /*eslint no-underscore-dangle: ["error", { "allow": ["_currentContext"] }]*/
 import { Injectable, Inject, Optional, inject } from '@angular/core';
-import {
-  HttpRequest,
-  HttpEvent,
-  HttpResponse,
-  HttpErrorResponse,
-  HttpInterceptorFn,
-  HttpHandlerFn,
-} from '@angular/common/http';
+import { HttpRequest, HttpEvent, HttpResponse, HttpErrorResponse, HttpInterceptorFn, HttpHandlerFn } from '@angular/common/http';
 import { PlatformLocation } from '@angular/common';
 import { Observable } from 'rxjs';
 import * as api from '@opentelemetry/api';

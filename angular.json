@@ -42,12 +42,15 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/interceptor-example",
+            "outputPath": {
+              "base": "dist/interceptor-example"
+            },
             "index": "projects/interceptor-example/src/index.html",
-            "main": "projects/interceptor-example/src/main.ts",
-            "polyfills": "projects/interceptor-example/src/polyfills.ts",
+            "polyfills": [
+              "projects/interceptor-example/src/polyfills.ts"
+            ],
             "tsConfig": "projects/interceptor-example/tsconfig.app.json",
             "allowedCommonJsDependencies": [
               "shimmer"
@@ -61,12 +64,11 @@
               "projects/interceptor-example/src/styles.css"
             ],
             "scripts": [],
-            "vendorChunk": true,
             "extractLicenses": false,
-            "buildOptimizer": false,
             "sourceMap": true,
             "optimization": false,
-            "namedChunks": true
+            "namedChunks": true,
+            "browser": "projects/interceptor-example/src/main.ts"
           },
           "configurations": {
             "production": {
@@ -81,8 +83,6 @@
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
               "budgets": [
                 {
                   "type": "initial",
@@ -140,15 +140,18 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-devkit/build-angular:application",
           "options": {
             "allowedCommonJsDependencies": [
               "shimmer"
             ],
-            "outputPath": "dist/instrumentation-example",
+            "outputPath": {
+              "base": "dist/instrumentation-example"
+            },
             "index": "projects/instrumentation-example/src/index.html",
-            "main": "projects/instrumentation-example/src/main.ts",
-            "polyfills": "projects/instrumentation-example/src/polyfills.ts",
+            "polyfills": [
+              "projects/instrumentation-example/src/polyfills.ts"
+            ],
             "tsConfig": "projects/instrumentation-example/tsconfig.app.json",
             "assets": [
               "projects/instrumentation-example/src/favicon.ico",
@@ -159,12 +162,11 @@
               "projects/instrumentation-example/src/styles.css"
             ],
             "scripts": [],
-            "vendorChunk": true,
             "extractLicenses": false,
-            "buildOptimizer": false,
             "sourceMap": true,
             "optimization": false,
-            "namedChunks": true
+            "namedChunks": true,
+            "browser": "projects/instrumentation-example/src/main.ts"
           },
           "configurations": {
             "production": {
@@ -179,8 +181,6 @@
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
               "budgets": [
                 {
                   "type": "initial",
