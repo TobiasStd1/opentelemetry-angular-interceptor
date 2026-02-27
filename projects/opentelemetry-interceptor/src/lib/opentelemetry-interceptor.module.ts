@@ -4,7 +4,6 @@ import {
   ConstructorProvider,
   ExistingProvider,
   FactoryProvider,
-  Provider,
   makeEnvironmentProviders,
   EnvironmentProviders,
 } from '@angular/core';
@@ -14,16 +13,17 @@ import {
 } from './configuration/opentelemetry-config';
 
 /**
- * provideOpenTelemetryInterceptor
- * A opentelemetry interceptor provider
+ * provideOpenTelemetryInterceptorConfig
+ * A opentelemetry interceptor Config provider
+ * Note: usage of this provider requires manual registration of 'openTelemetryHttpInterceptor' in 'provideHttpClient(withInterceptors([...]))'
  */
-export function provideOpenTelemetryInterceptor(
+export function provideOpenTelemetryInterceptorConfig(
   config: OpenTelemetryConfig | null | undefined,
   configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
 ): EnvironmentProviders {
-  return makeEnvironmentProviders(
-    getOpenTelemetryInterceptorProviders(config, configProvider)
-  );
+  return makeEnvironmentProviders([
+    defineConfigProvider(config, configProvider)
+  ]);
 }
 
 /**
@@ -34,18 +34,5 @@ export function provideOpenTelemetryConfig(
   config: OpenTelemetryConfig | null | undefined,
   configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
 ): EnvironmentProviders {
-  return makeEnvironmentProviders([
-    defineConfigProvider(config, configProvider)
-  ]);
-}
-
-function getOpenTelemetryInterceptorProviders(
-  config: OpenTelemetryConfig | null | undefined,
-  configProvider?: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
-): Provider[] {
-  configProvider = defineConfigProvider(config, configProvider);
-
-  return [
-    configProvider,
-  ];
+  return provideOpenTelemetryInterceptorConfig(config, configProvider);
 }

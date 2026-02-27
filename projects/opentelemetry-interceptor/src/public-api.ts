@@ -1,8 +1,7 @@
 /*
  * Public API Surface of opentelemetry-interceptor
  */
-// Interceptor
-export { provideOpenTelemetryInterceptor, provideOpenTelemetryConfig } from './lib/opentelemetry-interceptor.module';
+export { provideOpenTelemetryInterceptorConfig, provideOpenTelemetryConfig } from './lib/opentelemetry-interceptor.module';
 export { openTelemetryHttpInterceptor, OpenTelemetryService } from './lib/interceptor/open-telemetry-http.interceptor';
 // Exporter
 export { provideOtelColExporter } from './lib/services/exporter/otelcol/otelcol-exporter.module';

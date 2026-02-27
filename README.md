@@ -225,7 +225,7 @@ there is 6 propagators (more info about propagator: https://github.com/open-tele
 
 #### Interceptor Provider
 
-Just add provideOpenTelemetryInterceptor to insert Interceptor
+Just add openTelemetryHttpInterceptor to interceptors array and add provideOpenTelemetryInterceptorConfig to insert a interceptor configuration.
 
 ```typescript
 import { ApplicationConfig } from '@angular/core';
@@ -240,7 +240,7 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([openTelemetryHttpInterceptor])
     ),
     //Insert provideOpenTelemetryInterceptor with configuration
-    provideOpenTelemetryInterceptor(environment.opentelemetryConfig),
+    provideOpenTelemetryInterceptorConfig(environment.opentelemetryConfig),
     //Insert OtelCol exporter provider
     provideOtelColExporter(),
     //Insert propagator provider

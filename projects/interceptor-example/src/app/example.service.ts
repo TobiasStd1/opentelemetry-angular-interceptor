@@ -13,10 +13,10 @@ export class ExampleService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getApiBackend(): Observable<Result> {
+  getApiBackend(): Observable<string> {
     return this.http
-      .get(`${this.urlTestBackend}/`, {})
-      .pipe(map((result: Result) => result));
+      .get(`${this.urlTestBackend}/`, {responseType:'text'})
+      .pipe(map((result) => result));
   }
 
   getApiParallelBackEnd(): Observable<any> {

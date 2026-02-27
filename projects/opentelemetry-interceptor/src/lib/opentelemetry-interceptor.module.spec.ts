@@ -4,15 +4,17 @@ import { otelcolExporterConfig } from '../../__mocks__/data/config.mock';
 import {
   OTEL_CONFIG,
   provideOpenTelemetryConfig,
-  provideOpenTelemetryInterceptor
+  provideOpenTelemetryInterceptorConfig
 } from '../public-api';
+import {provideHttpClientTesting} from "@angular/common/http/testing";
 
 describe('provideOpenTelemetryInterceptor', () => {
 
   it('should be created', () => {
     TestBed.configureTestingModule({
       providers: [
-        provideOpenTelemetryInterceptor(otelcolExporterConfig)
+        provideHttpClientTesting(),
+        provideOpenTelemetryInterceptorConfig(otelcolExporterConfig)
       ]
     });
     const config = TestBed.inject(OTEL_CONFIG);
@@ -22,7 +24,8 @@ describe('provideOpenTelemetryInterceptor', () => {
   it('should be created with configProvider', () => {
     TestBed.configureTestingModule({
       providers: [
-        provideOpenTelemetryInterceptor(null, {provide: OTEL_CONFIG, useValue: otelcolExporterConfig})
+        provideHttpClientTesting(),
+        provideOpenTelemetryInterceptorConfig(null, {provide: OTEL_CONFIG, useValue: otelcolExporterConfig})
       ]
     });
     const config = TestBed.inject(OTEL_CONFIG);
@@ -33,6 +36,7 @@ describe('provideOpenTelemetryInterceptor', () => {
     expect(() => {
       TestBed.configureTestingModule({
         providers : [
+          provideHttpClientTesting(),
           provideOpenTelemetryConfig(null, null)
         ]
       });
@@ -43,7 +47,8 @@ describe('provideOpenTelemetryInterceptor', () => {
     expect(() => {
       TestBed.configureTestingModule({
         providers: [
-          provideOpenTelemetryConfig(null,{provide: new InjectionToken<Date>('date'), useValue: new Date()})
+          provideHttpClientTesting(),
+          provideOpenTelemetryInterceptorConfig(null,{provide: new InjectionToken<Date>('date'), useValue: new Date()})
         ]
       });
     }).toThrow('Configuration error. token must be : InjectionToken opentelemetry.config ,  your token value is : InjectionToken date');
