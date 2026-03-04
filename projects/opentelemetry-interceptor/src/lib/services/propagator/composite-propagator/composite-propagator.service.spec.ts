@@ -3,7 +3,7 @@ import { CompositePropagator } from '@opentelemetry/core';
 import { CompositePropagatorService } from './composite-propagator.service';
 import { OTEL_CONFIG } from '../../../configuration/opentelemetry-config';
 import { jaegerPropagatorConfig } from '../../../../../__mocks__/data/config.mock';
-import {provideCompositePropagator} from "./composite-propagator.module";
+import { provideCompositePropagator } from './composite-propagator.module';
 
 describe('CompositePropagatorService', () => {
   let service: CompositePropagatorService;

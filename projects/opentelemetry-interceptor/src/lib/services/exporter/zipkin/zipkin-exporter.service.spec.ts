@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { ZipkinExporterService } from './zipkin-exporter.service';
-import { OTEL_CONFIG } from '../../../configuration/opentelemetry-config';
-import { zipkinConfig, zipkinOtherConfig } from '../../../../../__mocks__/data/config.mock';
 import { ExporterConfig, ZipkinExporter } from '@opentelemetry/exporter-zipkin';
 import { mocked } from 'jest-mock';
-import {provideZipkinExporter} from "./zipkin-exporter.module";
+import { zipkinConfig, zipkinOtherConfig } from '../../../../../__mocks__/data/config.mock';
+import { OTEL_CONFIG } from '../../../configuration/opentelemetry-config';
+import { provideZipkinExporter } from './zipkin-exporter.module';
+import { ZipkinExporterService } from './zipkin-exporter.service';
 
 jest.mock('@opentelemetry/exporter-zipkin');
 
@@ -14,10 +14,7 @@ describe('ZipkinExporterService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideZipkinExporter(),
-        { provide: OTEL_CONFIG, useValue: zipkinConfig },
-      ]
+      providers: [provideZipkinExporter(), { provide: OTEL_CONFIG, useValue: zipkinConfig }],
     });
     zipkinExporterService = TestBed.inject(ZipkinExporterService);
     mockedZipkinExporter.mockClear();
@@ -31,7 +28,7 @@ describe('ZipkinExporterService', () => {
     const exporter = zipkinExporterService.getExporter();
     expect(exporter).not.toBeNull();
     expect(exporter).toBeInstanceOf(ZipkinExporter);
-    const mockedZipkinConfig: ExporterConfig = mockedZipkinExporter.mock.calls[0][0];
+    const mockedZipkinConfig: ExporterConfig = mockedZipkinExporter.mock.calls[0][0] as any;
     expect(mockedZipkinConfig.url).toEqual('http://localhost');
     expect(mockedZipkinConfig.headers).toEqual({ test: 'test' });
   });
@@ -39,20 +36,14 @@ describe('ZipkinExporterService', () => {
   it('should generate an other zipkinExporter', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [
-        ZipkinExporterService,
-        { provide: OTEL_CONFIG, useValue: zipkinOtherConfig },
-      ]
+      providers: [ZipkinExporterService, { provide: OTEL_CONFIG, useValue: zipkinOtherConfig }],
     });
     zipkinExporterService = TestBed.inject(ZipkinExporterService);
     const exporter = zipkinExporterService.getExporter();
     expect(exporter).not.toBeNull();
     expect(exporter).toBeInstanceOf(ZipkinExporter);
-    const mockedZipkinConfig: ExporterConfig = mockedZipkinExporter.mock.calls[0][0];
+    const mockedZipkinConfig: ExporterConfig = mockedZipkinExporter.mock.calls[0][0] as any;
     expect(mockedZipkinConfig.headers).toBeUndefined();
     expect(mockedZipkinConfig.url).toBeUndefined();
   });
-
 });
-
-

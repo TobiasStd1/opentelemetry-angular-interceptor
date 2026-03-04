@@ -2,12 +2,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { JaegerHttpTracePropagatorService } from './jaeger-http-trace-propagator.service';
 import { OTEL_CONFIG } from '../../../configuration/opentelemetry-config';
-import {
-  jaegerPropagatorConfig,
-  jaegerPropagatorWithoutCustomHeaderConfig,
-} from '../../../../../__mocks__/data/config.mock';
+import { jaegerPropagatorConfig, jaegerPropagatorWithoutCustomHeaderConfig } from '../../../../../__mocks__/data/config.mock';
 import { JaegerPropagator } from '@opentelemetry/propagator-jaeger';
-import {provideJaegerHttpTracePropagator} from "./jaeger-http-trace-propagator.module";
+import { provideJaegerHttpTracePropagator } from './jaeger-http-trace-propagator.module';
 
 describe('JaegerHttpTracePropagatorService', () => {
   let service: JaegerHttpTracePropagatorService;

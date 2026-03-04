@@ -14,6 +14,3 @@ describe('NoopTextMapPropagatorService', () => {
     expect(service.getPropagator()).toBeNull();
   });
 });
-
-
-

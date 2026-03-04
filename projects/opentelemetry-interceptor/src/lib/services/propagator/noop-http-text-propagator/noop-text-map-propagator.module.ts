@@ -9,6 +9,6 @@ import { OTEL_PROPAGATOR } from '../propagator.interface';
 export function provideNoopTextMapPropagator(): Provider {
   return {
     provide: OTEL_PROPAGATOR,
-    useClass: NoopTextMapPropagatorService
+    useClass: NoopTextMapPropagatorService,
   };
 }

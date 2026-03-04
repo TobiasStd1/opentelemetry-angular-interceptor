@@ -8,7 +8,6 @@ import {
 } from '../../../../../__mocks__/data/config.mock';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 
-
 describe('OtelcolExporterService', () => {
   let otelcolExporterService: OtelcolExporterService;
 

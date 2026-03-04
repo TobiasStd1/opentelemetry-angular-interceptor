@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { IExporter } from '../exporter.interface';
 import { SpanExporter } from '@opentelemetry/sdk-trace-base';
+import { IExporter } from '../exporter.interface';
 
 /**
  * NoopSpanExporterService
@@ -16,6 +16,6 @@ export class NoopSpanExporterService implements IExporter {
    * @return SpanExporter
    */
   getExporter(): SpanExporter {
-    return undefined;
+    return undefined as any;
   }
 }

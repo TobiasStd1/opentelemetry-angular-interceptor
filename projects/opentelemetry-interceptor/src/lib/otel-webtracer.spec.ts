@@ -1,13 +1,16 @@
 import { InjectionToken } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { instrumentationConsoleOtelConfig } from '../../__mocks__/data/config.mock';
-// eslint-disable-next-line max-len
-import {
-  OTEL_CONFIG, OTEL_INSTRUMENTATION_PLUGINS,
-  provideNoopSpanExporter, provideNoopTextMapPropagator, provideOtelWebTracer
-} from '../public-api';
 import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
-import {InstrumentationService} from "./services/instrumentation/instrumentation.service";
+import { instrumentationConsoleOtelConfig } from '../../__mocks__/data/config.mock';
+
+import {
+  OTEL_CONFIG,
+  OTEL_INSTRUMENTATION_PLUGINS,
+  provideNoopSpanExporter,
+  provideNoopTextMapPropagator,
+  provideOtelWebTracer,
+} from '../public-api';
+import { InstrumentationService } from './services/instrumentation/instrumentation.service';
 
 describe('provideOtelWebTracer', () => {
   let instrumentationService: InstrumentationService;
@@ -19,7 +22,7 @@ describe('provideOtelWebTracer', () => {
         provideNoopSpanExporter(),
         provideNoopTextMapPropagator(),
         { provide: OTEL_CONFIG, useValue: instrumentationConsoleOtelConfig },
-        { provide: OTEL_INSTRUMENTATION_PLUGINS, useValue: [new XMLHttpRequestInstrumentation()] }
+        { provide: OTEL_INSTRUMENTATION_PLUGINS, useValue: [new XMLHttpRequestInstrumentation()] },
       ],
     });
     instrumentationService = TestBed.inject(InstrumentationService);
@@ -31,10 +34,14 @@ describe('provideOtelWebTracer', () => {
   it('should be created with configProvider', () => {
     TestBed.configureTestingModule({
       providers: [
-        provideOtelWebTracer(null, { provide: OTEL_CONFIG, useValue: instrumentationConsoleOtelConfig }),
+        provideOtelWebTracer(null, {
+          provide: OTEL_CONFIG,
+          useValue: instrumentationConsoleOtelConfig,
+        }),
         provideNoopSpanExporter(),
         provideNoopTextMapPropagator(),
-        { provide: OTEL_INSTRUMENTATION_PLUGINS, useValue: [new XMLHttpRequestInstrumentation()] }]
+        { provide: OTEL_INSTRUMENTATION_PLUGINS, useValue: [new XMLHttpRequestInstrumentation()] },
+      ],
     });
     instrumentationService = TestBed.inject(InstrumentationService);
     expect(instrumentationService).toBeTruthy();
@@ -45,9 +52,7 @@ describe('provideOtelWebTracer', () => {
   it('should return error without config', () => {
     expect(() => {
       TestBed.configureTestingModule({
-        providers: [
-          provideOtelWebTracer(null,null)
-        ],
+        providers: [provideOtelWebTracer(null)],
       });
     }).toThrow('Configuration error. you must specify a configuration in config or configProvider');
   });
@@ -56,9 +61,14 @@ describe('provideOtelWebTracer', () => {
     expect(() => {
       TestBed.configureTestingModule({
         providers: [
-          provideOtelWebTracer(null,{ provide: new InjectionToken<Date>('date'), useValue: new Date() })
+          provideOtelWebTracer(null, {
+            provide: new InjectionToken<Date>('date'),
+            useValue: new Date(),
+          }),
         ],
       });
-    }).toThrow('Configuration error. token must be : InjectionToken opentelemetry.config ,  your token value is : InjectionToken date');
+    }).toThrow(
+      'Configuration error. token must be : InjectionToken opentelemetry.config ,  your token value is : InjectionToken date',
+    );
   });
 });

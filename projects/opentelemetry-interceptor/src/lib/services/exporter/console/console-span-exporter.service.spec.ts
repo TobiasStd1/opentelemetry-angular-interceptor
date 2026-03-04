@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { ConsoleSpanExporterService } from './console-span-exporter.service';
 import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base';
 
-
 describe('ConsoleExporterService', () => {
   let service: ConsoleSpanExporterService;
 

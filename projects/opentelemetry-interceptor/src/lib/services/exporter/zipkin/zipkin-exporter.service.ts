@@ -1,8 +1,8 @@
-import { Injectable, Inject } from '@angular/core';
-import { IExporter } from '../exporter.interface';
+import { inject, Injectable } from '@angular/core';
+import { ExporterConfig, ZipkinExporter } from '@opentelemetry/exporter-zipkin';
 import { SpanExporter } from '@opentelemetry/sdk-trace-base';
-import { OpenTelemetryConfig, OTEL_CONFIG } from '../../../configuration/opentelemetry-config';
-import { ZipkinExporter, ExporterConfig } from '@opentelemetry/exporter-zipkin';
+import { OTEL_CONFIG } from '../../../configuration/opentelemetry-config';
+import { IExporter } from '../exporter.interface';
 
 /**
  * ZipkinExporterService class
@@ -11,22 +11,15 @@ import { ZipkinExporter, ExporterConfig } from '@opentelemetry/exporter-zipkin';
   providedIn: 'root',
 })
 export class ZipkinExporterService implements IExporter {
+  private readonly config = inject(OTEL_CONFIG);
+
   /**
    * zipkinConfig
    */
-  private zipkinConfig: ExporterConfig;
-
-  /**
-   * constructor
-   *
-   * @param config OpenTelemetryConfig
-   */
-  constructor(@Inject(OTEL_CONFIG) config: OpenTelemetryConfig) {
-    this.zipkinConfig = {
-      url: config.zipkinConfig?.url,
-      headers: config.zipkinConfig?.headers
-    };
-  }
+  private readonly zipkinConfig: ExporterConfig = {
+    url: this.config.zipkinConfig?.url,
+    headers: this.config.zipkinConfig?.headers,
+  };
 
   /**
    * Return a ZipkinExporter configured with zipkinConfig field

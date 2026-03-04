@@ -1,11 +1,12 @@
-import { Injectable, Inject } from '@angular/core';
-import { IPropagator } from '../propagator.interface';
+import { inject, Injectable } from '@angular/core';
 import { TextMapPropagator } from '@opentelemetry/api';
 import { CompositePropagator } from '@opentelemetry/core';
-import { B3PropagatorService } from '../b3-propagator/b3-propagator.service';
-import { W3CTraceContextPropagatorService } from '../w3c-trace-context-propagator/w3c-trace-context-propagator.service';
-import { JaegerHttpTracePropagatorService } from '../jaeger-http-trace-propagator/jaeger-http-trace-propagator.service';
 import { AwsXrayPropagatorService } from '../aws-xray-propagator/aws-xray-propagator.service';
+import { B3PropagatorService } from '../b3-propagator/b3-propagator.service';
+import { JaegerHttpTracePropagatorService } from '../jaeger-http-trace-propagator/jaeger-http-trace-propagator.service';
+import { IPropagator } from '../propagator.interface';
+import { W3CTraceContextPropagatorService } from '../w3c-trace-context-propagator/w3c-trace-context-propagator.service';
+
 /**
  * CompositePropagatorService
  */
@@ -13,19 +14,10 @@ import { AwsXrayPropagatorService } from '../aws-xray-propagator/aws-xray-propag
   providedIn: 'root',
 })
 export class CompositePropagatorService implements IPropagator {
-  /**
-   * Constructor
-   */
-  constructor(
-    @Inject(B3PropagatorService)
-    private b3PropagatorService: B3PropagatorService,
-    @Inject(W3CTraceContextPropagatorService)
-    private w3cTraceContextPropagatorService: W3CTraceContextPropagatorService,
-    @Inject(JaegerHttpTracePropagatorService)
-    private jaegerHttpTracePropagatorService: JaegerHttpTracePropagatorService,
-    @Inject(AwsXrayPropagatorService)
-    private awsXrayPropagatorService: AwsXrayPropagatorService
-  ) {}
+  private readonly b3PropagatorService = inject(B3PropagatorService);
+  private readonly w3cTraceContextPropagatorService = inject(W3CTraceContextPropagatorService);
+  private readonly jaegerHttpTracePropagatorService = inject(JaegerHttpTracePropagatorService);
+  private readonly awsXrayPropagatorService = inject(AwsXrayPropagatorService);
 
   /**
    * Return an CompositePropagator
@@ -38,7 +30,7 @@ export class CompositePropagatorService implements IPropagator {
         this.b3PropagatorService.getPropagator(),
         this.w3cTraceContextPropagatorService.getPropagator(),
         this.jaegerHttpTracePropagatorService.getPropagator(),
-        this.awsXrayPropagatorService.getPropagator()
+        this.awsXrayPropagatorService.getPropagator(),
       ],
     });
   }

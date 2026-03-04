@@ -1,12 +1,9 @@
-import { Injectable, Inject, Optional } from '@angular/core';
-import { IExporter } from '../exporter.interface';
-import { SpanExporter } from '@opentelemetry/sdk-trace-base';
-import {
-  OpenTelemetryConfig,
-  OTEL_CONFIG
-} from '../../../configuration/opentelemetry-config';
+import { inject, Injectable } from '@angular/core';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { OTLPExporterConfigBase } from '@opentelemetry/otlp-exporter-base';
+import { SpanExporter } from '@opentelemetry/sdk-trace-base';
+import { OTEL_CONFIG } from '../../../configuration/opentelemetry-config';
+import { IExporter } from '../exporter.interface';
 
 /**
  * OtelcolExporterService class
@@ -15,27 +12,23 @@ import { OTLPExporterConfigBase } from '@opentelemetry/otlp-exporter-base';
   providedIn: 'root',
 })
 export class OtelcolExporterService implements IExporter {
+  private readonly config = inject(OTEL_CONFIG);
   /**
    * CollectorExporterConfigBase
    */
-  private otelcolConfig: OTLPExporterConfigBase;
+  private otelcolConfig: OTLPExporterConfigBase = {
+    url: this.config.otelcolConfig?.url,
+    headers: this.config.otelcolConfig?.headers,
 
-  /**
-   * constructor
-   *
-   * @param config OpenTelemetryConfig
-   */
-  constructor(
-    @Inject(OTEL_CONFIG) config: OpenTelemetryConfig
-  ) {
-    this.otelcolConfig = {
-      url: config.otelcolConfig?.url,
-      headers: config.otelcolConfig?.headers,
-      // eslint-disable-next-line max-len
-      concurrencyLimit: Number(config.otelcolConfig?.concurrencyLimit ?? 0) <= 0 ? undefined : Number(config.otelcolConfig?.concurrencyLimit),
-      timeoutMillis: Number(config.otelcolConfig?.timeoutMillis ?? 0) <= 0 ? undefined :  Number(config.otelcolConfig?.timeoutMillis)
-    };
-  }
+    concurrencyLimit:
+      Number(this.config.otelcolConfig?.concurrencyLimit ?? 0) <= 0
+        ? undefined
+        : Number(this.config.otelcolConfig?.concurrencyLimit),
+    timeoutMillis:
+      Number(this.config.otelcolConfig?.timeoutMillis ?? 0) <= 0
+        ? undefined
+        : Number(this.config.otelcolConfig?.timeoutMillis),
+  };
 
   /**
    * Return a CollectorExporter with the configuration

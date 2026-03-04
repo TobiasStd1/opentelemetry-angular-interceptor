@@ -9,6 +9,6 @@ import { OTEL_PROPAGATOR } from '../propagator.interface';
 export function provideCompositePropagator(): Provider {
   return {
     provide: OTEL_PROPAGATOR,
-    useClass: CompositePropagatorService
+    useClass: CompositePropagatorService,
   };
 }

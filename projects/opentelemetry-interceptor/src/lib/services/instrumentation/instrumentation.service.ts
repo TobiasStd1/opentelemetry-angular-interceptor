@@ -1,66 +1,74 @@
-import { Inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ZoneContextManager } from '@opentelemetry/context-zone-peer-dep';
-import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
-import { Instrumentation, registerInstrumentations } from '@opentelemetry/instrumentation';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
+import {
+  BatchSpanProcessor,
+  ConsoleSpanExporter,
+  NoopSpanProcessor,
+  SimpleSpanProcessor,
+  SpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
 import {
   AlwaysOffSampler,
   AlwaysOnSampler,
   ParentBasedSampler,
   Sampler,
   TraceIdRatioBasedSampler,
-  WebTracerProvider
+  WebTracerProvider,
 } from '@opentelemetry/sdk-trace-web';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import {
-  ConsoleSpanExporter,
-  SimpleSpanProcessor,
-  BatchSpanProcessor,
-  NoopSpanProcessor,
-  SpanProcessor
-} from '@opentelemetry/sdk-trace-base';
-// eslint-disable-next-line max-len
-import { OTEL_CONFIG, OpenTelemetryConfig, OTEL_INSTRUMENTATION_PLUGINS, CommonCollectorConfig } from '../../configuration/opentelemetry-config';
-import { OTEL_EXPORTER, IExporter } from '../exporter/exporter.interface';
-import { OTEL_PROPAGATOR, IPropagator } from '../propagator/propagator.interface';
-import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
+  CommonCollectorConfig,
+  OTEL_CONFIG,
+  OTEL_INSTRUMENTATION_PLUGINS,
+} from '../../configuration/opentelemetry-config';
+import { IExporter, OTEL_EXPORTER } from '../exporter/exporter.interface';
+import { OTEL_PROPAGATOR } from '../propagator/propagator.interface';
 
 /**
  * InstrumentationService.
  * Service for component to add instrumentation.
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class InstrumentationService {
-
+  private readonly config = inject(OTEL_CONFIG);
+  private readonly exporterService = inject(OTEL_EXPORTER);
+  private readonly propagatorService = inject(OTEL_PROPAGATOR);
+  private readonly instrumentation = inject(OTEL_INSTRUMENTATION_PLUGINS);
   /**
    * tracerProvider
    */
-  private tracerProvider: WebTracerProvider;
+  private readonly tracerProvider = new WebTracerProvider({
+    sampler: this.defineProbabilitySampler(
+      this.convertStringToNumber(this.config.commonConfig.probabilitySampler),
+    ),
+    resource: this.loadResourceAttributes(this.config.commonConfig),
+    spanProcessors: this.insertOrNotSpanExporter(
+      this.config.commonConfig.production,
+      this.exporterService,
+      this.config.commonConfig.console,
+    ),
+  });
 
   /**
    * contextManager
    */
   private contextManager = new ZoneContextManager();
 
-  /**
-   * Constructor
-   *
-   * @param config
-   * @param exporterService
-   * @param propagatorService
-   */
-  constructor(@Inject(OTEL_CONFIG) private config: OpenTelemetryConfig,
-    @Inject(OTEL_EXPORTER)
-    private exporterService: IExporter,
-    @Inject(OTEL_PROPAGATOR)
-    private propagatorService: IPropagator,
-    @Inject(OTEL_INSTRUMENTATION_PLUGINS)
-    private instrumentation: Instrumentation[]) {
+  constructor() {
     this.tracerProvider = new WebTracerProvider({
-      sampler: this.defineProbabilitySampler(this.convertStringToNumber(this.config.commonConfig.probabilitySampler)),
+      sampler: this.defineProbabilitySampler(
+        this.convertStringToNumber(this.config.commonConfig.probabilitySampler),
+      ),
       resource: this.loadResourceAttributes(this.config.commonConfig),
-      spanProcessors: this.insertOrNotSpanExporter(this.config.commonConfig.production,
-        this.exporterService, this.config.commonConfig.console),
+      spanProcessors: this.insertOrNotSpanExporter(
+        this.config.commonConfig.production,
+        this.exporterService,
+        this.config.commonConfig.console,
+      ),
     });
   }
 
@@ -84,9 +92,7 @@ export class InstrumentationService {
    * @param commonConfig common configuration
    * @returns Resource
    */
-  private loadResourceAttributes(
-    commonConfig: CommonCollectorConfig
-  ): Resource {
+  private loadResourceAttributes(commonConfig: CommonCollectorConfig): Resource {
     return resourceFromAttributes({
       [ATTR_SERVICE_NAME]: commonConfig?.serviceName,
       ...commonConfig?.resourceAttributes,
@@ -100,10 +106,22 @@ export class InstrumentationService {
    * @param exporter exporter
    * @returns Array of SpanProcessor
    */
-  private insertOrNotSpanExporter(production: boolean, exporter: IExporter, console: boolean): Array<SpanProcessor> {
+  private insertOrNotSpanExporter(
+    production: boolean | undefined,
+    exporter: IExporter,
+    console = false,
+  ): Array<SpanProcessor> {
     if (this.exporterService.getExporter() !== undefined) {
-      return Array.of(this.insertSpanProcessorProductionMode(production, exporter),
-        this.insertConsoleSpanExporter(console));
+      const spanProcessors: SpanProcessor[] = [
+        this.insertSpanProcessorProductionMode(production, exporter),
+      ];
+
+      const consoleSpanProcessor = this.insertConsoleSpanExporter(console);
+      if (consoleSpanProcessor) {
+        spanProcessors.push(consoleSpanProcessor);
+      }
+
+      return spanProcessors;
     } else {
       return Array.of(new NoopSpanProcessor());
     }
@@ -115,10 +133,11 @@ export class InstrumentationService {
    * @param console config to insert console span
    * @returns SpanProcessor
    */
-  private insertConsoleSpanExporter(console: boolean): SpanProcessor {
+  private insertConsoleSpanExporter(console: boolean): SpanProcessor | undefined {
     if (console) {
       return new SimpleSpanProcessor(new ConsoleSpanExporter());
     }
+    return;
   }
 
   /**
@@ -130,8 +149,8 @@ export class InstrumentationService {
    * @returns SpanProcessor
    */
   private insertSpanProcessorProductionMode(
-    production: boolean,
-    exporter: IExporter
+    production: boolean | undefined,
+    exporter: IExporter,
   ): SpanProcessor {
     return production
       ? new BatchSpanProcessor(exporter.getExporter())
@@ -144,7 +163,7 @@ export class InstrumentationService {
    * @param value
    * @returns number or undefined
    */
-  private convertStringToNumber(value: string): number {
+  private convertStringToNumber(value?: string): number | undefined {
     return value !== undefined ? Number(value) : undefined;
   }
 
@@ -155,11 +174,13 @@ export class InstrumentationService {
    * @param sampleConfig the sample configuration
    * @returns Sampler
    */
-  private defineProbabilitySampler(sampleConfig: number): Sampler {
-    if (sampleConfig >= 1) {
+  private defineProbabilitySampler(sampleConfig?: number): Sampler {
+    if (typeof sampleConfig === 'number' && sampleConfig >= 1) {
       return new ParentBasedSampler({ root: new AlwaysOnSampler() });
-    }
-    else if (sampleConfig <= 0 || sampleConfig === undefined) {
+    } else if (
+      (typeof sampleConfig === 'number' && sampleConfig <= 0) ||
+      sampleConfig === undefined
+    ) {
       return new ParentBasedSampler({ root: new AlwaysOffSampler() });
     } else {
       return new ParentBasedSampler({ root: new TraceIdRatioBasedSampler(sampleConfig) });

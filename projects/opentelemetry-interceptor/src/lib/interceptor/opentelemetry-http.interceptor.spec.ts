@@ -1,15 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  HttpTestingController, provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import {
   HttpClient,
   HttpHeaders,
   HttpErrorResponse,
   HttpRequest,
-  HttpResponse, provideHttpClient, withInterceptors,
+  HttpResponse,
+  provideHttpClient,
+  withInterceptors,
 } from '@angular/common/http';
-import { openTelemetryHttpInterceptor, OpenTelemetryService } from './open-telemetry-http.interceptor';
+import {
+  openTelemetryHttpInterceptor,
+  OpenTelemetryService,
+} from './open-telemetry-http.interceptor';
 import {
   OTEL_CUSTOM_SPAN,
   OpenTelemetryConfig,
@@ -25,26 +28,18 @@ import {
   otelTraceparentIgnoreUrlsConfig,
 } from '../../../__mocks__/data/config.mock';
 import { of } from 'rxjs';
-import {
-  provideConsoleSpanExporter
-} from '../services/exporter/console/console-span-exporter.module';
+import { provideConsoleSpanExporter } from '../services/exporter/console/console-span-exporter.module';
 // eslint-disable-next-line max-len
-import {
-  provideW3CTraceContextPropagator
-} from '../services/propagator/w3c-trace-context-propagator/w3c-trace-context-propagator.module';
+import { provideW3CTraceContextPropagator } from '../services/propagator/w3c-trace-context-propagator/w3c-trace-context-propagator.module';
 import { CustomSpan } from './custom-span.interface';
 import { Span } from '@opentelemetry/api';
-import {
-  provideNoopSpanExporter
-} from '../services/exporter/noop-exporter/noop-span-exporter.module';
+import { provideNoopSpanExporter } from '../services/exporter/noop-exporter/noop-span-exporter.module';
 
 describe('OpenTelemetryHttpInterceptor', () => {
   let httpClient: HttpClient;
   let httpControllerMock: HttpTestingController;
 
-  const defineModuleTest = (
-    otelcolConfig: OpenTelemetryConfig
-  ) => {
+  const defineModuleTest = (otelcolConfig: OpenTelemetryConfig) => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
@@ -109,20 +104,15 @@ describe('OpenTelemetryHttpInterceptor', () => {
 
   it('Add traceparent header on a given request with an error', () => {
     const url = 'http://url.test.com';
-    httpClient.get(url).subscribe(
-      (actualError) => {
-        expect(of(actualError)).toBeTruthy();
-        expect(actualError).not.toBeNull();
-        expect(actualError).not.toBeUndefined();
-      },
-    );
+    httpClient.get(url).subscribe((actualError) => {
+      expect(of(actualError)).toBeTruthy();
+      expect(actualError).not.toBeNull();
+      expect(actualError).not.toBeUndefined();
+    });
     const req = httpControllerMock.expectOne(url);
     expect(req.request.method).toEqual('GET');
 
-    req.flush(
-      { errorMessage: 'error' },
-      { status: 500, statusText: 'Server Error' }
-    );
+    req.flush({ errorMessage: 'error' }, { status: 500, statusText: 'Server Error' });
     httpControllerMock.verify();
   });
 
@@ -234,8 +224,7 @@ describe('OpenTelemetryHttpInterceptor', () => {
         {
           provide: OTEL_CUSTOM_SPAN,
           useClass: CustomSpanImpl,
-
-        }
+        },
       ],
     });
     httpClient = TestBed.inject(HttpClient);
@@ -252,7 +241,11 @@ describe('OpenTelemetryHttpInterceptor', () => {
 });
 
 class CustomSpanImpl implements CustomSpan {
-  add(span: Span, request: HttpRequest<unknown>, response: HttpResponse<unknown> | HttpErrorResponse): Span {
+  add(
+    span: Span,
+    request: HttpRequest<unknown>,
+    response: HttpResponse<unknown> | HttpErrorResponse,
+  ): Span {
     span.setAttribute('mycustom.key', request.params + ';' + response.status);
     return span;
   }

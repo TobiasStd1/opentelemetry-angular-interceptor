@@ -1,4 +1,11 @@
-import { ClassProvider, ConstructorProvider, ExistingProvider, FactoryProvider, InjectionToken, ValueProvider } from '@angular/core';
+import {
+  ClassProvider,
+  ConstructorProvider,
+  ExistingProvider,
+  FactoryProvider,
+  InjectionToken,
+  ValueProvider,
+} from '@angular/core';
 import { AttributeValue, DiagLogger, DiagLogLevel } from '@opentelemetry/api';
 import { Instrumentation } from '@opentelemetry/instrumentation';
 import { CustomSpan } from '../interceptor/custom-span.interface';
@@ -138,21 +145,32 @@ export const OTEL_LOGGER = new InjectionToken<DiagLogger>('otelcol.logger');
 /** custom span */
 export const OTEL_CUSTOM_SPAN = new InjectionToken<CustomSpan>('otelcol.custom-span');
 
-export const OTEL_INSTRUMENTATION_PLUGINS = new InjectionToken<Instrumentation[]>('otelcol.instrumentation.plugins');
+export const OTEL_INSTRUMENTATION_PLUGINS = new InjectionToken<Instrumentation[]>(
+  'otelcol.instrumentation.plugins',
+);
 
 export const defineConfigProvider = (
   config: OpenTelemetryConfig | null | undefined,
-  configProvider: ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider
+  configProvider?:
+    | ValueProvider
+    | ClassProvider
+    | ConstructorProvider
+    | ExistingProvider
+    | FactoryProvider,
 ): ValueProvider | ClassProvider | ConstructorProvider | ExistingProvider | FactoryProvider => {
   if (config) {
     configProvider = { provide: OTEL_CONFIG, useValue: config };
   } else {
     if (configProvider) {
       if (configProvider.provide !== OTEL_CONFIG) {
-        throw new Error(`Configuration error. token must be : ${OTEL_CONFIG} ,  your token value is : ${configProvider.provide}`);
+        throw new Error(
+          `Configuration error. token must be : ${OTEL_CONFIG} ,  your token value is : ${configProvider.provide}`,
+        );
       }
     } else {
-      throw new Error(`Configuration error. you must specify a configuration in config or configProvider`);
+      throw new Error(
+        `Configuration error. you must specify a configuration in config or configProvider`,
+      );
     }
   }
   return configProvider;

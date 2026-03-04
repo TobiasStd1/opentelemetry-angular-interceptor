@@ -1,52 +1,60 @@
 /*eslint no-underscore-dangle: ["error", { "allow": ["_currentContext"] }]*/
-import { Injectable, Inject, Optional, inject } from '@angular/core';
-import { HttpRequest, HttpEvent, HttpResponse, HttpErrorResponse, HttpInterceptorFn, HttpHandlerFn } from '@angular/common/http';
 import { PlatformLocation } from '@angular/common';
-import { Observable } from 'rxjs';
-import * as api from '@opentelemetry/api';
-import { Span, SpanStatusCode, DiagLogger, SpanKind } from '@opentelemetry/api';
-import { WebTracerProvider, StackContextManager } from '@opentelemetry/sdk-trace-web';
 import {
-  SimpleSpanProcessor,
-  ConsoleSpanExporter,
-  BatchSpanProcessor,
-  NoopSpanProcessor,
-  AlwaysOnSampler,
+  HttpErrorResponse,
+  HttpEvent,
+  HttpHandlerFn,
+  HttpInterceptorFn,
+  HttpRequest,
+  HttpResponse,
+} from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import * as api from '@opentelemetry/api';
+import { Span, SpanKind, SpanStatusCode } from '@opentelemetry/api';
+import { isUrlIgnored } from '@opentelemetry/core';
+import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
+import {
   AlwaysOffSampler,
-  TraceIdRatioBasedSampler,
+  AlwaysOnSampler,
+  BatchSpanProcessor,
+  BufferConfig,
+  ConsoleSpanExporter,
+  NoopSpanProcessor,
   ParentBasedSampler,
   Sampler,
-  BufferConfig
+  SimpleSpanProcessor,
+  SpanProcessor,
+  TraceIdRatioBasedSampler,
 } from '@opentelemetry/sdk-trace-base';
+import infoLibrary from '../../version.json';
+import { StackContextManager, WebTracerProvider } from '@opentelemetry/sdk-trace-web';
 import {
-  isUrlIgnored
-} from '@opentelemetry/core';
-import {
-  ATTR_USER_AGENT_ORIGINAL,
-  ATTR_URL_QUERY,
-  ATTR_HTTP_RESPONSE_STATUS_CODE,
   ATTR_ERROR_TYPE,
-  ATTR_SERVICE_NAME,
   ATTR_HTTP_REQUEST_METHOD,
-  ATTR_URL_FULL,
-  ATTR_URL_SCHEME,
+  ATTR_HTTP_RESPONSE_STATUS_CODE,
   ATTR_SERVER_ADDRESS,
   ATTR_SERVER_PORT,
+  ATTR_SERVICE_NAME,
+  ATTR_URL_FULL,
+  ATTR_URL_QUERY,
+  ATTR_URL_SCHEME,
+  ATTR_USER_AGENT_ORIGINAL,
 } from '@opentelemetry/semantic-conventions';
-import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
-import { tap, finalize } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { finalize, tap } from 'rxjs/operators';
 import {
   CommonCollectorConfig,
-  OpenTelemetryConfig,
   OTEL_CONFIG,
+  OTEL_CUSTOM_SPAN,
+  OTEL_LOGGER,
 } from '../configuration/opentelemetry-config';
-import infoLibrary from '../../version.json';
-import { OTEL_EXPORTER, IExporter } from '../services/exporter/exporter.interface';
-import { OTEL_PROPAGATOR, IPropagator } from '../services/propagator/propagator.interface';
-import { OTEL_LOGGER, OTEL_CUSTOM_SPAN } from '../configuration/opentelemetry-config';
-import { CustomSpan } from './custom-span.interface';
+import { OTEL_EXPORTER } from '../services/exporter/exporter.interface';
+import { OTEL_PROPAGATOR } from '../services/propagator/propagator.interface';
 
-export const openTelemetryHttpInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
+export const openTelemetryHttpInterceptor: HttpInterceptorFn = (
+  req: HttpRequest<unknown>,
+  next: HttpHandlerFn,
+) => {
   const openTelemetryService = inject(OpenTelemetryService);
   return openTelemetryService.intercept(req, next);
 };
@@ -55,114 +63,99 @@ export const openTelemetryHttpInterceptor: HttpInterceptorFn = (req: HttpRequest
   providedIn: 'root',
 })
 export class OpenTelemetryService {
+  private readonly config = inject(OTEL_CONFIG);
+  private readonly exporterService = inject(OTEL_EXPORTER);
+  private readonly propagatorService = inject(OTEL_PROPAGATOR);
+  private readonly logger = inject(OTEL_LOGGER, { optional: true });
+  private readonly customSpan = inject(OTEL_CUSTOM_SPAN, { optional: true });
+  private readonly platformLocation = inject(PlatformLocation);
   /**
    * tracer
    */
-  tracer: WebTracerProvider;
+  tracer = new WebTracerProvider({
+    sampler: this.defineProbabilitySampler(
+      this.convertStringToNumber(this.config.commonConfig.probabilitySampler),
+    ),
+    resource: this.loadResourceAttributes(this.config.commonConfig),
+    spanProcessors: this.insertOrNotSpanExporter() ?? [],
+  });
+
   /**
    * context manager
    */
-  contextManager: StackContextManager;
+  readonly contextManager = new StackContextManager();
   /**
    * Log or not body
    */
-  logBody = false;
+  logBody = this.config.commonConfig.logBody ?? false;
 
-   /**
+  /**
    * constructor
    *
-   * @param config configuration
-   * @param exporterService service exporter injected
-   * @param propagatorService propagator injected
-   * @param logger define logger
-   * @param customSpan a customSpan interface to add attributes
-   * @param platformLocation encapsulates all calls to DOM APIs
    */
-   constructor(
-    @Inject(OTEL_CONFIG) private config: OpenTelemetryConfig,
-    @Inject(OTEL_EXPORTER)
-    private exporterService: IExporter,
-    @Inject(OTEL_PROPAGATOR)
-    private propagatorService: IPropagator,
-    @Optional() @Inject(OTEL_LOGGER)
-    private logger: DiagLogger,
-    @Optional() @Inject(OTEL_CUSTOM_SPAN)
-    private customSpan: CustomSpan,
-    private platformLocation: PlatformLocation
-  ) {
-    this.tracer = new WebTracerProvider({
-      sampler: this.defineProbabilitySampler(this.convertStringToNumber(config.commonConfig.probabilitySampler)),
-      resource: this.loadResourceAttributes(this.config.commonConfig),
-      spanProcessors: this.insertOrNotSpanExporter()
-    });
-    this.contextManager = new StackContextManager();
+  constructor() {
     this.tracer.register({
       propagator: this.propagatorService.getPropagator(),
-      contextManager: this.contextManager
+      contextManager: this.contextManager,
     });
-    this.logBody = config.commonConfig.logBody;
-    api.diag.setLogger(logger, config.commonConfig.logLevel);
+
+    if (this.logger) {
+      api.diag.setLogger(this.logger, this.config.commonConfig.logLevel);
+    }
   }
 
-    /**
-     * Interceptor method for HttpInterceptorFn
-     *
-     * @param request the current request
-     * @param next next
-     */
-     intercept(
-      request: HttpRequest<unknown>,
-      next: HttpHandlerFn
-    ): Observable<HttpEvent<unknown>> {
-      if (isUrlIgnored(request.url, this.config.ignoreUrls?.urls)) {
-        return next(request);
-      }
-      this.contextManager.disable(); //FIX - reinit contextManager for each http call
-      this.contextManager.enable();
-      const span: Span = this.initSpan(request);
-      const tracedReq = this.injectContextAndHeader(request);
-      return next(tracedReq).pipe(
-        tap(
-          (event: HttpEvent<any>) => {
-              if (event instanceof HttpResponse) {
-                span.setAttributes(
-                    {
-                        [ATTR_HTTP_RESPONSE_STATUS_CODE]: event.status,
-                    }
-                );
-                if (this.logBody && event.body != null) {
-                    span.addEvent('response', { body: JSON.stringify(event.body) });
-                }
-                span.setStatus({
-                    code: SpanStatusCode.UNSET
-                });
-                this.setCustomSpan(span, request, event);
-              }
-          },
-          (event: HttpErrorResponse) => {
-            span.setAttributes(
-              {
-                [ATTR_HTTP_RESPONSE_STATUS_CODE]: event.status,
-                [ATTR_ERROR_TYPE] : event.name,
-              }
-            );
-            span.recordException({
-              name: event.name,
-              message: event.message,
-              stack: event.error
+  /**
+   * Interceptor method for HttpInterceptorFn
+   *
+   * @param request the current request
+   * @param next next
+   */
+  intercept(request: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
+    if (isUrlIgnored(request.url, this.config.ignoreUrls?.urls)) {
+      return next(request);
+    }
+    this.contextManager.disable(); //FIX - reinit contextManager for each http call
+    this.contextManager.enable();
+    const span: Span = this.initSpan(request);
+    const tracedReq = this.injectContextAndHeader(request);
+    return next(tracedReq).pipe(
+      tap(
+        (event: HttpEvent<any>) => {
+          if (event instanceof HttpResponse) {
+            span.setAttributes({
+              [ATTR_HTTP_RESPONSE_STATUS_CODE]: event.status,
             });
+            if (this.logBody && event.body != null) {
+              span.addEvent('response', { body: JSON.stringify(event.body) });
+            }
             span.setStatus({
-              code: SpanStatusCode.ERROR
+              code: SpanStatusCode.UNSET,
             });
             this.setCustomSpan(span, request, event);
           }
-        ),
-        finalize(() => {
-          span.end();
-          this.contextManager.disable();
-        })
-      );
-    }
+        },
+        (event: HttpErrorResponse) => {
+          span.setAttributes({
+            [ATTR_HTTP_RESPONSE_STATUS_CODE]: event.status,
+            [ATTR_ERROR_TYPE]: event.name,
+          });
+          span.recordException({
+            name: event.name,
+            message: event.message,
+            stack: event.error,
+          });
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+          });
+          this.setCustomSpan(span, request, event);
+        },
+      ),
+      finalize(() => {
+        span.end();
+        this.contextManager.disable();
+      }),
+    );
+  }
 
   /**
    * Get current scheme, hostname and port
@@ -174,9 +167,7 @@ export class OpenTelemetryService {
   /**
    * Generate Resource Attributes
    */
-  private loadResourceAttributes(
-    commonConfig: CommonCollectorConfig
-  ): Resource {
+  private loadResourceAttributes(commonConfig: CommonCollectorConfig): Resource {
     return resourceFromAttributes({
       [ATTR_SERVICE_NAME]: commonConfig?.serviceName,
       ...commonConfig?.resourceAttributes,
@@ -188,30 +179,26 @@ export class OpenTelemetryService {
    * @param request request
    */
   private initSpan(request: HttpRequest<unknown>): Span {
-    const urlRequest = (request.urlWithParams.startsWith('http')) ? new URL(request.urlWithParams) : new URL(this.getURL());
-    const span = this.tracer
-      .getTracer(infoLibrary.name, infoLibrary.version)
-      .startSpan(
-        `${request.method.toUpperCase()}`,
-        {
-          attributes: {
-            [ATTR_HTTP_REQUEST_METHOD]: request.method,
-            [ATTR_SERVER_ADDRESS]: urlRequest.host,
-            [ATTR_SERVER_PORT]: urlRequest.port,
-            [ATTR_URL_FULL]: request.urlWithParams,
-            [ATTR_URL_SCHEME]: urlRequest.protocol.replace(':', ''),
-            [ATTR_URL_QUERY]: urlRequest.search,
-            [ATTR_USER_AGENT_ORIGINAL]: window.navigator.userAgent
-          },
-          kind: SpanKind.CLIENT,
+    const urlRequest = request.urlWithParams.startsWith('http')
+      ? new URL(request.urlWithParams)
+      : new URL(this.getURL());
+    const span = this.tracer.getTracer(infoLibrary.name, infoLibrary.version).startSpan(
+      `${request.method.toUpperCase()}`,
+      {
+        attributes: {
+          [ATTR_HTTP_REQUEST_METHOD]: request.method,
+          [ATTR_SERVER_ADDRESS]: urlRequest.host,
+          [ATTR_SERVER_PORT]: urlRequest.port,
+          [ATTR_URL_FULL]: request.urlWithParams,
+          [ATTR_URL_SCHEME]: urlRequest.protocol.replace(':', ''),
+          [ATTR_URL_QUERY]: urlRequest.search,
+          [ATTR_USER_AGENT_ORIGINAL]: window.navigator.userAgent,
         },
-        this.contextManager.active()
-      );
-    /*eslint no-underscore-dangle: ["error", { "allow": ["_currentContext"] }]*/
-    this.contextManager._currentContext = api.trace.setSpan(
+        kind: SpanKind.CLIENT,
+      },
       this.contextManager.active(),
-      span
     );
+    this.contextManager._currentContext = api.trace.setSpan(this.contextManager.active(), span);
     return span;
   }
 
@@ -220,16 +207,11 @@ export class OpenTelemetryService {
    *
    * @param request request
    */
-  private injectContextAndHeader(
-    request: HttpRequest<unknown>
-  ) {
+  private injectContextAndHeader(request: HttpRequest<unknown>) {
     const carrier = {};
-    api.propagation.inject(
-      this.contextManager.active(),
-      carrier,
-      api.defaultTextMapSetter
-    );
-    request.headers.keys().map(key => {
+    api.propagation.inject(this.contextManager.active(), carrier, api.defaultTextMapSetter);
+    request.headers.keys().map((key) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       carrier[key] = request.headers.get(key);
     });
     return request.clone({
@@ -240,10 +222,16 @@ export class OpenTelemetryService {
   /**
    * Verify to insert or not a Span Exporter
    */
-  private insertOrNotSpanExporter() {
-
+  private insertOrNotSpanExporter(): SpanProcessor[] {
     if (this.exporterService.getExporter() !== undefined) {
-      return Array.of(this.insertSpanProcessorProductionMode(), this.insertConsoleSpanExporter());
+      const processors: SpanProcessor[] = [this.insertSpanProcessorProductionMode()];
+      const consoleSpanProcessor = this.insertConsoleSpanExporter();
+
+      if (consoleSpanProcessor) {
+        processors.push(consoleSpanProcessor);
+      }
+
+      return processors;
     } else {
       return Array.of(new NoopSpanProcessor());
     }
@@ -252,10 +240,11 @@ export class OpenTelemetryService {
   /**
    * Insert in tracer the console span if config is true
    */
-  private insertConsoleSpanExporter() {
+  private insertConsoleSpanExporter(): SimpleSpanProcessor | undefined {
     if (this.config.commonConfig.console) {
       return new SimpleSpanProcessor(new ConsoleSpanExporter());
     }
+    return;
   }
 
   /**
@@ -264,14 +253,20 @@ export class OpenTelemetryService {
    */
   private insertSpanProcessorProductionMode() {
     const bufferConfig: BufferConfig = {
-      maxExportBatchSize: this.convertStringToNumber(this.config.batchSpanProcessorConfig?.maxExportBatchSize),
-      scheduledDelayMillis: this.convertStringToNumber(this.config.batchSpanProcessorConfig?.scheduledDelayMillis),
-      exportTimeoutMillis: this.convertStringToNumber(this.config.batchSpanProcessorConfig?.exportTimeoutMillis),
-      maxQueueSize: this.convertStringToNumber(this.config.batchSpanProcessorConfig?.maxQueueSize)
+      maxExportBatchSize: this.convertStringToNumber(
+        this.config.batchSpanProcessorConfig?.maxExportBatchSize,
+      ),
+      scheduledDelayMillis: this.convertStringToNumber(
+        this.config.batchSpanProcessorConfig?.scheduledDelayMillis,
+      ),
+      exportTimeoutMillis: this.convertStringToNumber(
+        this.config.batchSpanProcessorConfig?.exportTimeoutMillis,
+      ),
+      maxQueueSize: this.convertStringToNumber(this.config.batchSpanProcessorConfig?.maxQueueSize),
     };
     return this.config.commonConfig.production
-        ? new BatchSpanProcessor(this.exporterService.getExporter(), bufferConfig)
-        : new SimpleSpanProcessor(this.exporterService.getExporter());
+      ? new BatchSpanProcessor(this.exporterService.getExporter(), bufferConfig)
+      : new SimpleSpanProcessor(this.exporterService.getExporter());
   }
 
   /**
@@ -280,11 +275,13 @@ export class OpenTelemetryService {
    *
    * @param sampleConfig the sample configuration
    */
-  private defineProbabilitySampler(sampleConfig: number): Sampler {
-    if (sampleConfig >= 1) {
+  private defineProbabilitySampler(sampleConfig?: number): Sampler {
+    if (typeof sampleConfig === 'number' && sampleConfig >= 1) {
       return new ParentBasedSampler({ root: new AlwaysOnSampler() });
-    }
-    else if (sampleConfig <= 0 || sampleConfig === undefined) {
+    } else if (
+      (typeof sampleConfig === 'number' && sampleConfig <= 0) ||
+      sampleConfig === undefined
+    ) {
       return new ParentBasedSampler({ root: new AlwaysOffSampler() });
     } else {
       return new ParentBasedSampler({ root: new TraceIdRatioBasedSampler(sampleConfig) });
@@ -297,7 +294,7 @@ export class OpenTelemetryService {
    * @param value
    * @returns number or undefined
    */
-  private convertStringToNumber(value: string): number {
+  private convertStringToNumber(value: string | undefined): number | undefined {
     return value !== undefined ? Number(value) : undefined;
   }
 
@@ -309,9 +306,11 @@ export class OpenTelemetryService {
    * @param response
    * @returns Span
    */
-  private setCustomSpan(span: Span, request: HttpRequest<unknown>, response: HttpResponse<unknown> | HttpErrorResponse): Span {
+  private setCustomSpan(
+    span: Span,
+    request: HttpRequest<unknown>,
+    response: HttpResponse<unknown> | HttpErrorResponse,
+  ): Span {
     return this.customSpan != null ? this.customSpan.add(span, request, response) : span;
   }
 }
-
-

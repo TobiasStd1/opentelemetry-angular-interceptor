@@ -1,7 +1,4 @@
-import {
-  OpenTelemetryConfig,
-} from '../../src/lib/configuration/opentelemetry-config';
-
+import { OpenTelemetryConfig } from '../../src/lib/configuration/opentelemetry-config';
 
 /**
  * @ignore
@@ -9,7 +6,7 @@ import {
 export const otelcolExporterConfig: OpenTelemetryConfig = {
   commonConfig: {
     serviceName: 'test',
-    logBody: true
+    logBody: true,
   },
   otelcolConfig: {
     url: 'http://localhost',
@@ -57,7 +54,7 @@ export const otelcolExporterWithoutUrlAndB3Config: OpenTelemetryConfig = {
   },
   otelcolConfig: {
     url: 'http://localhost:4318/v1/traces',
-  }
+  },
 };
 
 /**
@@ -69,8 +66,8 @@ export const otelcolExporterWithProbabilitySamplerAndCompositeConfig: OpenTeleme
     console: true,
     probabilitySampler: '0.7',
     resourceAttributes: {
-      test: 'test'
-    }
+      test: 'test',
+    },
   },
   otelcolConfig: {
     url: 'http://localhost',
@@ -106,7 +103,6 @@ export const otelcolExporterWithProbabilitySamplerAtTwoConfig: OpenTelemetryConf
   },
 };
 
-
 /**
  * @ignore
  */
@@ -130,7 +126,7 @@ export const zipkinConfig: OpenTelemetryConfig = {
   zipkinConfig: {
     url: 'http://localhost',
     headers: { test: 'test' },
-  }
+  },
 };
 
 /**
@@ -140,7 +136,7 @@ export const zipkinOtherConfig: OpenTelemetryConfig = {
   commonConfig: {
     production: false,
     serviceName: 'test',
-  }
+  },
 };
 
 /**
@@ -152,7 +148,6 @@ export const jaegerPropagatorWithoutCustomHeaderConfig: OpenTelemetryConfig = {
   },
 };
 
-
 /**
  * @ignore
  */
@@ -162,7 +157,7 @@ export const b3PropagatorMultiConfig: OpenTelemetryConfig = {
   },
   otelcolConfig: {
     url: 'http://localhost',
-  }
+  },
 };
 
 /**
@@ -177,7 +172,7 @@ export const b3PropagatorSingleConfig: OpenTelemetryConfig = {
   },
   b3PropagatorConfig: {
     multiHeader: '0',
-  }
+  },
 };
 
 /**
@@ -192,13 +187,13 @@ export const instrumentationConsoleOtelConfig: OpenTelemetryConfig = {
   },
   otelcolConfig: {
     url: 'http://localhost',
-  }
+  },
 };
 
 /**
  * @ignore
  */
- export const instrumentationConsoleOtelConfigSamplerOff: OpenTelemetryConfig = {
+export const instrumentationConsoleOtelConfigSamplerOff: OpenTelemetryConfig = {
   commonConfig: {
     serviceName: 'test',
     console: true,
@@ -207,7 +202,7 @@ export const instrumentationConsoleOtelConfig: OpenTelemetryConfig = {
   },
   otelcolConfig: {
     url: 'http://localhost',
-  }
+  },
 };
 
 /**
@@ -221,24 +216,24 @@ export const instrumentationProductionOtelConfig: OpenTelemetryConfig = {
     probabilitySampler: '0.7',
     resourceAttributes: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      'service.namespace' : 'test'
-    }
+      'service.namespace': 'test',
+    },
   },
   otelcolConfig: {
     url: 'http://localhost',
     concurrencyLimit: '10',
-  }
+  },
 };
 
 /**
  * @ignore
  */
- export const otelTraceparentIgnoreUrlsConfig: OpenTelemetryConfig = {
+export const otelTraceparentIgnoreUrlsConfig: OpenTelemetryConfig = {
   commonConfig: {
     serviceName: 'test',
-    logBody: true
+    logBody: true,
   },
   ignoreUrls: {
-    urls: ['http://url.test.com']
-  }
+    urls: ['http://url.test.com'],
+  },
 };

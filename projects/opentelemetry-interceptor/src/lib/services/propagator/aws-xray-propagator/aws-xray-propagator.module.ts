@@ -9,6 +9,6 @@ import { AwsXrayPropagatorService } from './aws-xray-propagator.service';
 export function provideAwsXrayPropagator(): Provider {
   return {
     provide: OTEL_PROPAGATOR,
-    useClass: AwsXrayPropagatorService
+    useClass: AwsXrayPropagatorService,
   };
 }

@@ -1,11 +1,8 @@
-import { Injectable, Inject } from '@angular/core';
-import { IPropagator } from '../propagator.interface';
+import { inject, Injectable } from '@angular/core';
 import { TextMapPropagator } from '@opentelemetry/api';
-import { B3Propagator, B3PropagatorConfig, B3InjectEncoding } from '@opentelemetry/propagator-b3';
-import {
-  OpenTelemetryConfig,
-  OTEL_CONFIG,
-} from '../../../configuration/opentelemetry-config';
+import { B3InjectEncoding, B3Propagator } from '@opentelemetry/propagator-b3';
+import { OTEL_CONFIG } from '../../../configuration/opentelemetry-config';
+import { IPropagator } from '../propagator.interface';
 
 /**
  * B3PropagatorService
@@ -18,21 +15,14 @@ import {
   providedIn: 'root',
 })
 export class B3PropagatorService implements IPropagator {
+  private readonly config = inject(OTEL_CONFIG);
+
   /**
    * B3PropagatorConfig
    */
-  private readonly b3PropagatorConfig: B3PropagatorConfig;
-
-  /**
-   * Constructor
-   *
-   * @param config OpenTelemetryConfig
-   */
-  constructor(@Inject(OTEL_CONFIG) config: OpenTelemetryConfig) {
-    this.b3PropagatorConfig = {
-      injectEncoding: B3PropagatorService.defineB3Encoding(config.b3PropagatorConfig?.multiHeader)
-    };
-  }
+  private readonly b3PropagatorConfig = {
+    injectEncoding: B3PropagatorService.defineB3Encoding(this.config.b3PropagatorConfig?.multiHeader),
+  };
 
   /**
    * Define if it's a single or multi header
@@ -40,7 +30,7 @@ export class B3PropagatorService implements IPropagator {
    * @param value string (0 => single header, 1 => Multi Header)
    * @return B3InjectEncoding
    */
-  private static defineB3Encoding(value: string): B3InjectEncoding {
+  private static defineB3Encoding(value?: string): B3InjectEncoding {
     if (value && '0' === value) {
       return B3InjectEncoding.SINGLE_HEADER;
     }

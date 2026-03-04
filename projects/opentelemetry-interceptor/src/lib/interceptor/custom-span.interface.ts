@@ -13,5 +13,9 @@ export interface CustomSpan {
    * @param request an HttpRequest
    * @param response an HttpResponse
    */
-  add(span: Span, request: HttpRequest<unknown>, response: HttpResponse<unknown> | HttpErrorResponse): Span;
+  add(
+    span: Span,
+    request: HttpRequest<unknown>,
+    response: HttpResponse<unknown> | HttpErrorResponse,
+  ): Span;
 }

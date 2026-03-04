@@ -1,21 +1,13 @@
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { InjectionToken } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { otelcolExporterConfig } from '../../__mocks__/data/config.mock';
-import {
-  OTEL_CONFIG,
-  provideOpenTelemetryConfig,
-  provideOpenTelemetryInterceptorConfig
-} from '../public-api';
-import {provideHttpClientTesting} from "@angular/common/http/testing";
+import { OTEL_CONFIG, provideOpenTelemetryConfig, provideOpenTelemetryInterceptorConfig } from '../public-api';
 
 describe('provideOpenTelemetryInterceptor', () => {
-
   it('should be created', () => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClientTesting(),
-        provideOpenTelemetryInterceptorConfig(otelcolExporterConfig)
-      ]
+      providers: [provideHttpClientTesting(), provideOpenTelemetryInterceptorConfig(otelcolExporterConfig)],
     });
     const config = TestBed.inject(OTEL_CONFIG);
     expect(config).not.toBeUndefined();
@@ -25,8 +17,8 @@ describe('provideOpenTelemetryInterceptor', () => {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClientTesting(),
-        provideOpenTelemetryInterceptorConfig(null, {provide: OTEL_CONFIG, useValue: otelcolExporterConfig})
-      ]
+        provideOpenTelemetryInterceptorConfig(null, { provide: OTEL_CONFIG, useValue: otelcolExporterConfig }),
+      ],
     });
     const config = TestBed.inject(OTEL_CONFIG);
     expect(config).not.toBeUndefined();
@@ -35,10 +27,7 @@ describe('provideOpenTelemetryInterceptor', () => {
   it('should return error without config', () => {
     expect(() => {
       TestBed.configureTestingModule({
-        providers : [
-          provideHttpClientTesting(),
-          provideOpenTelemetryConfig(null, null)
-        ]
+        providers: [provideHttpClientTesting(), provideOpenTelemetryConfig(null)],
       });
     }).toThrow('Configuration error. you must specify a configuration in config or configProvider');
   });
@@ -48,8 +37,8 @@ describe('provideOpenTelemetryInterceptor', () => {
       TestBed.configureTestingModule({
         providers: [
           provideHttpClientTesting(),
-          provideOpenTelemetryInterceptorConfig(null,{provide: new InjectionToken<Date>('date'), useValue: new Date()})
-        ]
+          provideOpenTelemetryInterceptorConfig(null, { provide: new InjectionToken<Date>('date'), useValue: new Date() }),
+        ],
       });
     }).toThrow('Configuration error. token must be : InjectionToken opentelemetry.config ,  your token value is : InjectionToken date');
   });
